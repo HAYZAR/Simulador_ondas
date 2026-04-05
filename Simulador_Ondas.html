@@ -1,0 +1,2405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Simulador Saber 11 · Física de Ondas — Cap. 16</title>
+
+<!-- KaTeX para fórmulas matemáticas -->
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css"
+      crossorigin="anonymous"/>
+<script defer
+        src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"
+        crossorigin="anonymous"></script>
+<script defer
+        src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
+        crossorigin="anonymous"
+        onload="window.katexReady=true"></script>
+
+<style>
+/* =========================================================
+   RESET & BASE
+   ========================================================= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --col-yellow : #F5D20A;
+  --col-blue   : #003087;
+  --col-red    : #CF1020;
+  --col-bg     : #F0F4FA;
+  --col-white  : #FFFFFF;
+  --col-card   : #FFFFFF;
+  --col-border : #D1D9E6;
+  --col-text   : #1A2340;
+  --col-muted  : #6B7A99;
+  --col-ok     : #1D7B3A;
+  --col-ok-bg  : #E6F7EC;
+  --col-err    : #B91C1C;
+  --col-err-bg : #FEE2E2;
+  --col-warn   : #B45309;
+  --col-warn-bg: #FEF3C7;
+  --radius     : 10px;
+  --shadow     : 0 2px 16px rgba(0,0,0,.10);
+  --shadow-md  : 0 4px 24px rgba(0,0,0,.14);
+  --font       : 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+body {
+  font-family: var(--font);
+  background: var(--col-bg);
+  color: var(--col-text);
+  min-height: 100vh;
+}
+
+/* =========================================================
+   HEADER INSTITUCIONAL
+   ========================================================= */
+.inst-header {
+  background: var(--col-blue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.inst-header .logo-band {
+  display: flex;
+  gap: 0;
+  height: 28px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.inst-header .logo-band span {
+  display: block;
+  width: 18px;
+}
+.inst-header h1 {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.inst-header small {
+  font-size: .75rem;
+  opacity: .8;
+}
+.inst-header .timer-chip {
+  background: var(--col-red);
+  border-radius: 20px;
+  padding: 4px 16px;
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.inst-header .timer-chip.warning { background: #B45309; animation: pulse .8s infinite; }
+.inst-header .timer-chip.danger  { background: #7F1D1D; animation: pulse .4s infinite; }
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: .6; }
+}
+
+/* =========================================================
+   SCREENS
+   ========================================================= */
+.screen { display: none; }
+.screen.active { display: flex; flex-direction: column; min-height: calc(100vh - 56px); }
+
+/* ---- PANTALLA 1: BIENVENIDA ---- */
+.welcome-wrap {
+  max-width: 560px;
+  width: 100%;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+.welcome-card {
+  background: var(--col-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.welcome-card .card-hero {
+  background: linear-gradient(135deg, var(--col-blue) 0%, #1a4fa0 100%);
+  padding: 32px 28px 24px;
+  color: #fff;
+  text-align: center;
+  position: relative;
+}
+.welcome-card .card-hero::after {
+  content: '〜〜〜〜〜〜〜〜〜〜〜〜';
+  position: absolute;
+  bottom: 4px; left: 0; right: 0;
+  font-size: 1.6rem;
+  letter-spacing: -2px;
+  opacity: .15;
+  overflow: hidden;
+  line-height: 1;
+}
+.welcome-card .card-hero .badge {
+  display: inline-block;
+  background: var(--col-yellow);
+  color: var(--col-blue);
+  font-weight: 800;
+  font-size: .7rem;
+  padding: 2px 10px;
+  border-radius: 20px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.welcome-card .card-hero h2 { font-size: 1.5rem; font-weight: 800; }
+.welcome-card .card-hero p  { font-size: .85rem; opacity: .85; margin-top: 6px; }
+.welcome-card .card-body { padding: 28px; }
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--col-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 6px;
+}
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--col-border);
+  border-radius: 8px;
+  font-size: .95rem;
+  font-family: inherit;
+  color: var(--col-text);
+  transition: border-color .2s;
+}
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: var(--col-blue);
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.info-pills {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 22px;
+}
+.info-pill {
+  background: #EEF3FF;
+  color: var(--col-blue);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: .78rem;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 5px;
+}
+.btn-primary {
+  width: 100%;
+  background: var(--col-blue);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 13px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s, transform .1s;
+  font-family: inherit;
+}
+.btn-primary:hover { background: #1a4fa0; transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+
+/* ---- HISTORIAL DE INTENTOS ---- */
+.history-section {
+  margin-top: 22px;
+  border-top: 1.5px solid var(--col-border);
+  padding-top: 18px;
+}
+.history-section h4 {
+  font-size: .82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--col-muted);
+  margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.history-empty {
+  text-align: center;
+  color: var(--col-muted);
+  font-size: .85rem;
+  padding: 16px 0;
+  background: var(--col-bg);
+  border-radius: 8px;
+}
+.history-list { display: flex; flex-direction: column; gap: 8px; }
+.history-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  background: var(--col-bg);
+  border: 1.5px solid var(--col-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: .82rem;
+}
+.history-item .hi-name  { font-weight: 700; color: var(--col-text); }
+.history-item .hi-date  { font-size: .72rem; color: var(--col-muted); }
+.history-item .hi-score {
+  font-weight: 900;
+  font-size: 1rem;
+  padding: 2px 10px;
+  border-radius: 20px;
+  min-width: 52px;
+  text-align: center;
+}
+.hi-score.avanzado     { background:#BBF7D0; color:#065F46; }
+.hi-score.satisfactorio{ background:#D1FAE5; color:#065F46; }
+.hi-score.minimo       { background:var(--col-warn-bg); color:var(--col-warn); }
+.hi-score.insuficiente { background:var(--col-err-bg);  color:var(--col-err); }
+.hi-score.sin-resp     { background:#F3F4F6; color:#6B7280; }
+.history-item .hi-raw  { font-size: .75rem; color: var(--col-muted); white-space:nowrap; }
+.btn-clear-history {
+  background: none;
+  border: none;
+  color: var(--col-err);
+  font-size: .72rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+  padding: 0;
+}
+.btn-clear-history:hover { opacity: .7; }
+
+/* ---- PANTALLA 2: INSTRUCCIONES ---- */
+.instr-wrap {
+  max-width: 640px;
+  width: 100%;
+  margin: 36px auto;
+  padding: 0 16px;
+}
+.instr-card {
+  background: var(--col-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 36px 32px;
+}
+.instr-card h2 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--col-blue);
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.instr-list { list-style: none; margin-bottom: 24px; }
+.instr-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--col-border);
+  font-size: .93rem;
+  display: flex; align-items: flex-start; gap: 10px;
+  line-height: 1.5;
+}
+.instr-list li:last-child { border: none; }
+.instr-list .icon {
+  min-width: 22px; min-height: 22px;
+  background: var(--col-blue);
+  color: #fff;
+  border-radius: 50%;
+  font-size: .7rem;
+  font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+.section-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 28px;
+}
+.section-chip {
+  background: #EEF3FF;
+  color: var(--col-blue);
+  border: 1.5px solid #C7D4F5;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: .78rem;
+  font-weight: 600;
+}
+.btn-row { display: flex; gap: 12px; }
+.btn-secondary {
+  flex: 1;
+  background: var(--col-bg);
+  color: var(--col-text);
+  border: 1.5px solid var(--col-border);
+  border-radius: 8px;
+  padding: 11px;
+  font-size: .93rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .2s;
+}
+.btn-secondary:hover { background: #e2e8f5; }
+.btn-start {
+  flex: 2;
+  background: var(--col-red);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: .03em;
+  transition: background .2s;
+}
+.btn-start:hover { background: #a91018; }
+
+/* ---- PANTALLA 3: PRUEBA ---- */
+.test-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 20px;
+  max-width: 1100px;
+  width: 100%;
+  margin: 24px auto;
+  padding: 0 16px;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .test-layout { grid-template-columns: 1fr; }
+  .sidebar { order: 2; }
+  .question-panel { order: 1; }
+}
+
+/* Sidebar */
+.sidebar { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 16px; }
+.sidebar-card {
+  background: var(--col-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+.sidebar-card h3 {
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--col-muted);
+  margin-bottom: 12px;
+}
+.q-palette {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.q-btn {
+  aspect-ratio: 1;
+  border: 1.5px solid var(--col-border);
+  border-radius: 6px;
+  background: var(--col-white);
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+  color: var(--col-text);
+  font-family: inherit;
+}
+.q-btn:hover       { border-color: var(--col-blue); color: var(--col-blue); }
+.q-btn.answered    { background: var(--col-blue); color: #fff; border-color: var(--col-blue); }
+.q-btn.current     { background: var(--col-yellow); color: var(--col-blue); border-color: #c9a800; font-weight: 900; }
+.q-btn.answered.current { background: linear-gradient(135deg, var(--col-blue), #1a4fa0); border-color: var(--col-blue); color: var(--col-yellow); }
+
+.palette-legend { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: .75rem; color: var(--col-muted); }
+.legend-dot {
+  width: 14px; height: 14px; border-radius: 3px;
+  border: 1.5px solid var(--col-border);
+}
+.legend-dot.answered  { background: var(--col-blue); border-color: var(--col-blue); }
+.legend-dot.current   { background: var(--col-yellow); border-color: #c9a800; }
+.legend-dot.unanswered{ background: var(--col-white); }
+
+.progress-bar-wrap {
+  background: var(--col-border);
+  border-radius: 99px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--col-blue), #4a7fd4);
+  border-radius: 99px;
+  transition: width .4s ease;
+}
+.progress-label { font-size: .78rem; color: var(--col-muted); text-align: right; }
+
+/* Botón entregar */
+.btn-submit-test {
+  width: 100%;
+  background: var(--col-red);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: .93rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .2s;
+}
+.btn-submit-test:hover { background: #a91018; }
+
+/* Panel de pregunta */
+.question-panel {
+  background: var(--col-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 32px;
+}
+.q-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.q-number-chip {
+  background: var(--col-blue);
+  color: #fff;
+  border-radius: 20px;
+  padding: 4px 16px;
+  font-size: .82rem;
+  font-weight: 700;
+}
+.q-section-chip {
+  background: #EEF3FF;
+  color: var(--col-blue);
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: .78rem;
+  font-weight: 600;
+  border: 1.5px solid #C7D4F5;
+}
+.q-topic-chip {
+  background: #FFF9E6;
+  color: #7C5E00;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: .78rem;
+  font-weight: 600;
+  border: 1.5px solid #E9D77B;
+}
+.q-text {
+  font-size: 1.0rem;
+  line-height: 1.7;
+  margin-bottom: 28px;
+  color: var(--col-text);
+}
+.q-text .math-block {
+  background: #F5F8FF;
+  border-left: 3px solid var(--col-blue);
+  border-radius: 0 6px 6px 0;
+  padding: 10px 16px;
+  margin: 12px 0;
+  overflow-x: auto;
+  font-size: 1.05rem;
+}
+.options-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.option-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 18px;
+  border: 2px solid var(--col-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .15s;
+  position: relative;
+  user-select: none;
+}
+.option-card:hover { border-color: var(--col-blue); background: #F0F5FF; }
+.option-card.selected {
+  border-color: var(--col-blue);
+  background: #EEF3FF;
+}
+.option-card.selected .opt-letter {
+  background: var(--col-blue);
+  color: #fff;
+  border-color: var(--col-blue);
+}
+.opt-letter {
+  min-width: 32px; height: 32px;
+  border: 2px solid var(--col-border);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800;
+  font-size: .88rem;
+  color: var(--col-muted);
+  transition: all .15s;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.opt-text { font-size: .93rem; line-height: 1.55; }
+
+/* Navegación */
+.q-nav {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+}
+.btn-nav {
+  background: var(--col-bg);
+  border: 1.5px solid var(--col-border);
+  border-radius: 8px;
+  padding: 9px 20px;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--col-text);
+  transition: all .15s;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-nav:hover { background: #e2e8f5; border-color: var(--col-blue); color: var(--col-blue); }
+.btn-nav:disabled { opacity: .4; cursor: not-allowed; }
+.btn-nav.next { background: var(--col-blue); color: #fff; border-color: var(--col-blue); }
+.btn-nav.next:hover { background: #1a4fa0; }
+
+/* ---- PANTALLA 4: RESULTADOS ---- */
+.results-wrap {
+  max-width: 860px;
+  width: 100%;
+  margin: 30px auto 50px;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Tarjeta principal de puntaje */
+.score-hero {
+  background: linear-gradient(135deg, var(--col-blue) 0%, #1a4fa0 100%);
+  border-radius: var(--radius);
+  padding: 36px 32px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+}
+.score-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30 Q15 10 30 30 Q45 50 60 30' stroke='rgba(255,255,255,.06)' stroke-width='1' fill='none'/%3E%3C/svg%3E") repeat;
+}
+.score-circle {
+  position: relative;
+  width: 140px; height: 140px; flex-shrink: 0;
+}
+.score-circle svg { width: 140px; height: 140px; transform: rotate(-90deg); }
+.score-circle .score-num {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.score-circle .score-num .big { font-size: 2.6rem; font-weight: 900; line-height: 1; }
+.score-circle .score-num .small { font-size: .75rem; opacity: .75; letter-spacing: .05em; }
+.score-info { flex: 1; min-width: 220px; position: relative; }
+.score-info .student-name { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; }
+.score-info .score-sub { font-size: .88rem; opacity: .8; margin-bottom: 16px; }
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 18px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: .9rem;
+  margin-bottom: 12px;
+}
+.level-badge.avanzado     { background: #BBF7D0; color: #065F46; }
+.level-badge.satisfactorio{ background: #D1FAE5; color: #065F46; }
+.level-badge.minimo       { background: var(--col-warn-bg); color: var(--col-warn); }
+.level-badge.insuficiente { background: var(--col-err-bg); color: var(--col-err); }
+.score-stats {
+  display: flex; gap: 20px; flex-wrap: wrap;
+}
+.score-stat { opacity: .9; }
+.score-stat .val { font-size: 1.4rem; font-weight: 900; }
+.score-stat .lbl { font-size: .72rem; opacity: .75; letter-spacing: .04em; }
+
+/* Sección de diagnóstico */
+.result-card {
+  background: var(--col-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 26px 28px;
+}
+.result-card h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--col-blue);
+  margin-bottom: 18px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-bars { display: flex; flex-direction: column; gap: 14px; }
+.section-bar-item .sb-header {
+  display: flex; justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  gap: 8px;
+}
+.section-bar-item .sb-name {
+  font-size: .88rem; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-bar-item .sb-section-tag {
+  background: #EEF3FF;
+  color: var(--col-blue);
+  border-radius: 12px;
+  padding: 1px 8px;
+  font-size: .72rem;
+  font-weight: 700;
+}
+.section-bar-item .sb-score {
+  font-size: .82rem; font-weight: 700; color: var(--col-muted); white-space: nowrap;
+}
+.sb-track {
+  background: var(--col-border);
+  border-radius: 99px;
+  height: 10px;
+  overflow: hidden;
+}
+.sb-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .8s ease;
+}
+.sb-fill.good   { background: linear-gradient(90deg, #059669, #34d399); }
+.sb-fill.mid    { background: linear-gradient(90deg, #d97706, #fbbf24); }
+.sb-fill.bad    { background: linear-gradient(90deg, #dc2626, #f87171); }
+
+/* Diagnóstico textual */
+.diag-box {
+  background: #F0F5FF;
+  border: 1.5px solid #C7D4F5;
+  border-radius: 8px;
+  padding: 16px 18px;
+  font-size: .9rem;
+  line-height: 1.6;
+  color: var(--col-text);
+}
+.diag-box strong { color: var(--col-blue); }
+
+/* Revisión de preguntas */
+.review-list { display: flex; flex-direction: column; gap: 12px; }
+.review-item {
+  border-radius: 8px;
+  border: 1.5px solid var(--col-border);
+  overflow: hidden;
+}
+.review-item-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s;
+}
+.review-item-header:hover { background: var(--col-bg); }
+.review-item.correct .review-item-header { border-left: 4px solid var(--col-ok); background: var(--col-ok-bg); }
+.review-item.incorrect .review-item-header { border-left: 4px solid var(--col-err); background: var(--col-err-bg); }
+.review-status {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.review-q-num {
+  font-weight: 800;
+  font-size: .82rem;
+  color: var(--col-muted);
+  min-width: 28px;
+}
+.review-q-text {
+  flex: 1;
+  font-size: .88rem;
+  line-height: 1.4;
+  color: var(--col-text);
+}
+.review-answer {
+  font-size: .8rem;
+  font-weight: 700;
+  display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0;
+}
+.review-answer .your-ans { color: var(--col-err); }
+.review-answer .correct-ans { color: var(--col-ok); }
+.review-detail {
+  display: none;
+  padding: 14px 18px 14px 60px;
+  background: var(--col-white);
+  border-top: 1px solid var(--col-border);
+  font-size: .875rem;
+  line-height: 1.6;
+  color: #374151;
+}
+.review-detail.open { display: block; }
+.review-detail .fb-label {
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--col-muted);
+  margin-bottom: 6px;
+}
+.review-detail .correct-opt {
+  background: var(--col-ok-bg);
+  border-left: 3px solid var(--col-ok);
+  border-radius: 0 6px 6px 0;
+  padding: 6px 12px;
+  margin-bottom: 10px;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--col-ok);
+}
+
+/* Botones de exportación */
+.export-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.btn-export {
+  flex: 1;
+  min-width: 160px;
+  border: none;
+  border-radius: 8px;
+  padding: 13px 20px;
+  font-size: .93rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .2s;
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+}
+.btn-export.csv    { background: #065F46; color: #fff; }
+.btn-export.csv:hover  { background: #047857; }
+.btn-export.print  { background: #1e40af; color: #fff; }
+.btn-export.print:hover { background: #1d4ed8; }
+
+/* ---- Estado Google Sheets ---- */
+.sheets-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: .88rem;
+  font-weight: 600;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  color: #166534;
+  transition: background .3s, border-color .3s, color .3s;
+}
+.sheets-status.loading { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
+.sheets-status.error   { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+.sheets-status.hidden  { display: none; }
+
+/* Botón reiniciar */
+.btn-restart {
+  background: var(--col-blue);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 32px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .2s;
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+}
+.btn-restart:hover { background: #1a4fa0; }
+
+/* ---- PANTALLA SELECCIÓN DE PRUEBA ---- */
+.testsel-wrap {
+  max-width: 780px;
+  width: 100%;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+.testsel-title {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.testsel-title h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--col-blue);
+}
+.testsel-title p {
+  font-size: .9rem;
+  color: var(--col-muted);
+  margin-top: 6px;
+}
+.testsel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 600px) { .testsel-grid { grid-template-columns: 1fr; } }
+.testsel-card {
+  background: var(--col-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  border: 2.5px solid transparent;
+  transition: border-color .2s, transform .15s;
+  cursor: pointer;
+}
+.testsel-card:hover { transform: translateY(-3px); }
+.testsel-card.t1:hover { border-color: var(--col-blue); }
+.testsel-card.t2:hover { border-color: #7c3aed; }
+.testsel-card .tc-hero {
+  padding: 28px 24px 20px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.testsel-card.t1 .tc-hero { background: linear-gradient(135deg, var(--col-blue), #1a4fa0); }
+.testsel-card.t2 .tc-hero { background: linear-gradient(135deg, #7c3aed, #4f46e5); }
+.testsel-card .tc-hero::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20 Q10 5 20 20 Q30 35 40 20' stroke='rgba(255,255,255,.08)' stroke-width='1.5' fill='none'/%3E%3C/svg%3E") repeat;
+}
+.testsel-card .tc-num {
+  font-size: 3rem;
+  font-weight: 900;
+  opacity: .3;
+  position: absolute;
+  top: 10px; right: 20px;
+  line-height: 1;
+}
+.testsel-card .tc-badge {
+  display: inline-block;
+  background: rgba(255,255,255,.2);
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.testsel-card .tc-hero h3 { font-size: 1.2rem; font-weight: 800; }
+.testsel-card .tc-hero p  { font-size: .82rem; opacity: .85; margin-top: 4px; }
+.testsel-card .tc-body { padding: 20px 24px 24px; }
+.tc-topics { list-style: none; margin-bottom: 20px; }
+.tc-topics li {
+  font-size: .82rem;
+  color: var(--col-muted);
+  padding: 4px 0;
+  display: flex; align-items: center; gap: 6px;
+  border-bottom: 1px dashed var(--col-border);
+}
+.tc-topics li:last-child { border: none; }
+.tc-topics li::before { content: '›'; font-weight: 800; color: var(--col-blue); }
+.testsel-card.t2 .tc-topics li::before { color: #7c3aed; }
+.btn-start-test {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: .95rem;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .2s;
+  color: #fff;
+}
+.testsel-card.t1 .btn-start-test { background: var(--col-blue); }
+.testsel-card.t1 .btn-start-test:hover { background: #1a4fa0; }
+.testsel-card.t2 .btn-start-test { background: #7c3aed; }
+.testsel-card.t2 .btn-start-test:hover { background: #6d28d9; }
+.testsel-back {
+  text-align: center;
+  margin-top: 16px;
+}
+.testsel-back button {
+  background: none; border: none;
+  color: var(--col-muted);
+  font-size: .85rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Modal confirmación */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.modal-box h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; }
+.modal-box p  { font-size: .92rem; color: var(--col-muted); margin-bottom: 24px; line-height: 1.5; }
+.modal-box .modal-btns { display: flex; gap: 12px; justify-content: center; }
+.modal-box .modal-btns button {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: .95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+}
+.modal-box .modal-btns .btn-cancel {
+  background: var(--col-bg);
+  color: var(--col-text);
+  border: 1.5px solid var(--col-border);
+}
+.modal-box .modal-btns .btn-confirm { background: var(--col-red); color: #fff; }
+
+/* =========================================================
+   MODO IMPRESIÓN / PDF
+   ========================================================= */
+@media print {
+  .inst-header, #screenWelcome, #screenInstructions, #screenTestSelect,
+  #screenTest, .export-row, .btn-restart,
+  #timerChip { display: none !important; }
+  #screenResults { display: flex !important; }
+  body { background: #fff; }
+  .score-hero { background: #003087 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .result-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+  .review-detail { display: block !important; }
+  .sb-fill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .results-wrap { margin: 0; }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .score-hero { flex-direction: column; align-items: flex-start; padding: 24px 20px; }
+  .question-panel { padding: 20px 16px; }
+  .result-card { padding: 20px 16px; }
+  .review-detail { padding-left: 18px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER INSTITUCIONAL
+     ============================================================ -->
+<header class="inst-header">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <div class="logo-band">
+      <span style="background:#F5D20A;"></span>
+      <span style="background:#003087;"></span>
+      <span style="background:#CF1020;"></span>
+    </div>
+    <div>
+      <h1>Simulador Saber 11 &mdash; Física de Ondas</h1>
+      <small>Corporación Universitaria Reformada · Ingeniería, 3.er Semestre</small>
+    </div>
+  </div>
+  <div id="timerChip" class="timer-chip" style="display:none;">
+    &#9201; <span id="timerDisplay">40:00</span>
+  </div>
+</header>
+
+<!-- ============================================================
+     PANTALLA 1: BIENVENIDA / DATOS DEL ESTUDIANTE
+     ============================================================ -->
+<div id="screenWelcome" class="screen active">
+  <div class="welcome-wrap">
+    <div class="welcome-card">
+      <div class="card-hero">
+        <div class="badge">Prueba de Física</div>
+        <h2>Ondas Mecánicas I</h2>
+        <p>Capítulo 16 &mdash; Secciones 16.1 a 16.8<br/>Halliday, Resnick &amp; Walker, 9.ª Ed.</p>
+      </div>
+      <div class="card-body">
+        <div class="info-pills">
+          <span class="info-pill">&#128221; 20 preguntas</span>
+          <span class="info-pill">&#8987; 40 minutos</span>
+          <span class="info-pill">&#127891; Nivel intermedio</span>
+          <span class="info-pill">&#128203; Selecci&oacute;n m&uacute;ltiple</span>
+        </div>
+        <div class="form-group">
+          <label>Nombre completo *</label>
+          <input type="text" id="inputName" placeholder="Ej. María Fernández García" required/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Código estudiantil</label>
+            <input type="text" id="inputCode" placeholder="Ej. 2023150"/>
+          </div>
+          <div class="form-group">
+            <label>Semestre</label>
+            <select id="inputSemester">
+              <option>3.er Semestre</option>
+              <option>4.° Semestre</option>
+              <option>Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Docente</label>
+          <input type="text" id="inputTeacher" value="Hayzar Hernández" readonly
+                 style="background:#f7f7f7; color:#888;"/>
+        </div>
+        <button class="btn-primary" onclick="goToInstructions()">Continuar &#8594;</button>
+
+        <!-- HISTORIAL -->
+        <div class="history-section">
+          <h4>
+            <span>&#128197; Intentos anteriores</span>
+            <button class="btn-clear-history" onclick="clearHistory()" title="Borrar historial">&#128465; Borrar todo</button>
+          </h4>
+          <div id="historyList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PANTALLA 2: INSTRUCCIONES
+     ============================================================ -->
+<div id="screenInstructions" class="screen">
+  <div class="instr-wrap">
+    <div class="instr-card">
+      <h2>&#128203; Instrucciones de la prueba</h2>
+      <ul class="instr-list">
+        <li><span class="icon">1</span> La prueba consta de <strong>20 preguntas</strong> de selecci&oacute;n m&uacute;ltiple con &uacute;nica respuesta (A, B, C, D).</li>
+        <li><span class="icon">2</span> Tienes <strong>40 minutos</strong> para completar la prueba. El tiempo se muestra en la parte superior. Al terminar el tiempo, la prueba se entrega autom&aacute;ticamente.</li>
+        <li><span class="icon">3</span> Haz clic en la opci&oacute;n que consideres correcta. Puedes cambiar tu respuesta en cualquier momento antes de entregar.</li>
+        <li><span class="icon">4</span> Usa el <strong>panel de navegaci&oacute;n</strong> (izquierda) para saltar entre preguntas. Los n&uacute;meros en azul indican preguntas respondidas.</li>
+        <li><span class="icon">5</span> Al finalizar, obtendr&aacute;s tu <strong>puntaje</strong>, nivel de desempe&ntilde;o y retroalimentaci&oacute;n detallada por secci&oacute;n.</li>
+        <li><span class="icon">6</span> Se recomienda responder <strong>todas las preguntas</strong>. No hay penalizaci&oacute;n por respuesta incorrecta.</li>
+      </ul>
+      <p style="font-size:.82rem;color:var(--col-muted);margin-bottom:16px;">Temas evaluados:</p>
+      <div class="section-chips">
+        <span class="section-chip">§16-2 Tipos de ondas</span>
+        <span class="section-chip">§16-3 Transversal vs. Longitudinal</span>
+        <span class="section-chip">§16-4 Longitud de onda y frecuencia</span>
+        <span class="section-chip">§16-5 Rapidez de onda</span>
+        <span class="section-chip">§16-6 Rapidez en cuerda tensa</span>
+        <span class="section-chip">§16-7 Energ&iacute;a y potencia</span>
+        <span class="section-chip">§16-8 Ecuaci&oacute;n de onda</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="showScreen('screenWelcome')">&#8592; Volver</button>
+        <button class="btn-start" onclick="showScreen('screenTestSelect')">&#128250; Seleccionar prueba</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PANTALLA 2b: SELECCIÓN DE PRUEBA
+     ============================================================ -->
+<div id="screenTestSelect" class="screen">
+  <div class="testsel-wrap">
+    <div class="testsel-title">
+      <h2>&#128203; Elige tu prueba</h2>
+      <p>Selecciona una de las dos pruebas disponibles. Cada una tiene 20 preguntas sobre los mismos temas.</p>
+    </div>
+    <div class="testsel-grid">
+      <!-- CARD PRUEBA 1 -->
+      <div class="testsel-card t1">
+        <div class="tc-hero">
+          <div class="tc-num">1</div>
+          <div class="tc-badge">Prueba 1</div>
+          <h3>Ondas Mec&aacute;nicas &mdash; Serie A</h3>
+          <p>20 preguntas &middot; 40 minutos</p>
+        </div>
+        <div class="tc-body">
+          <ul class="tc-topics">
+            <li>Tipos de ondas (§16-2)</li>
+            <li>Transversal vs. Longitudinal (§16-3)</li>
+            <li>Longitud de onda y frecuencia (§16-4/5)</li>
+            <li>Velocidad transversal (§16-5)</li>
+            <li>Rapidez en cuerda tensa (§16-6)</li>
+            <li>Energ&iacute;a y potencia (§16-7)</li>
+            <li>Ecuaci&oacute;n de onda (§16-8)</li>
+          </ul>
+          <button class="btn-start-test" onclick="startTest(1)">&#9654; Iniciar Prueba 1</button>
+        </div>
+      </div>
+      <!-- CARD PRUEBA 2 -->
+      <div class="testsel-card t2">
+        <div class="tc-hero">
+          <div class="tc-num">2</div>
+          <div class="tc-badge">Prueba 2</div>
+          <h3>Ondas Mec&aacute;nicas &mdash; Serie B</h3>
+          <p>20 preguntas &middot; 40 minutos</p>
+        </div>
+        <div class="tc-body">
+          <ul class="tc-topics">
+            <li>Tipos de ondas (§16-2)</li>
+            <li>Transversal vs. Longitudinal (§16-3)</li>
+            <li>Longitud de onda y frecuencia (§16-4/5)</li>
+            <li>Velocidad transversal (§16-5)</li>
+            <li>Rapidez en cuerda tensa (§16-6)</li>
+            <li>Energ&iacute;a y potencia (§16-7)</li>
+            <li>Ecuaci&oacute;n de onda (§16-8)</li>
+          </ul>
+          <button class="btn-start-test" onclick="startTest(2)">&#9654; Iniciar Prueba 2</button>
+        </div>
+      </div>
+    </div>
+    <div class="testsel-back">
+      <button onclick="showScreen('screenInstructions')">&#8592; Volver a instrucciones</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PANTALLA 3: PRUEBA
+     ============================================================ -->
+<div id="screenTest" class="screen">
+  <div class="test-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <h3>Progreso</h3>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+        </div>
+        <div class="progress-label" id="progressLabel">0 / 20 respondidas</div>
+      </div>
+
+      <div class="sidebar-card">
+        <h3>Navegaci&oacute;n de preguntas</h3>
+        <div class="q-palette" id="qPalette"></div>
+        <div class="palette-legend">
+          <div class="legend-item"><div class="legend-dot current"></div> Pregunta actual</div>
+          <div class="legend-item"><div class="legend-dot answered"></div> Respondida</div>
+          <div class="legend-item"><div class="legend-dot unanswered"></div> Sin responder</div>
+        </div>
+      </div>
+
+      <div class="sidebar-card">
+        <button class="btn-submit-test" onclick="confirmSubmit()">
+          &#9989; Entregar prueba
+        </button>
+      </div>
+    </aside>
+
+    <!-- PANEL DE PREGUNTA -->
+    <main class="question-panel" id="questionPanel">
+      <!-- Se llena dinámicamente -->
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================
+     PANTALLA 4: RESULTADOS
+     ============================================================ -->
+<div id="screenResults" class="screen">
+  <div class="results-wrap" id="resultsContent">
+    <!-- Se llena dinámicamente -->
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL CONFIRMACIÓN ENTREGA
+     ============================================================ -->
+<div class="modal-overlay" id="submitModal">
+  <div class="modal-box">
+    <div style="font-size:2.5rem;margin-bottom:12px;">&#128203;</div>
+    <h3>¿Entregar la prueba?</h3>
+    <p id="submitModalMsg">Tienes preguntas sin responder. ¿Deseas entregar de todas formas?</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="submitTest()">Sí, entregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+/* =========================================================
+   CONFIGURACIÓN GOOGLE SHEETS
+   ===========================================================
+   PASOS PARA ACTIVAR:
+   1. Abre Google Sheets → crea una hoja nueva en blanco.
+   2. Ve a  Extensiones → Apps Script.
+   3. Borra el código de ejemplo y pega el contenido del
+      archivo "Google_Apps_Script.gs" (misma carpeta).
+   4. Clic en "Implementar" → "Nueva implementación":
+        Tipo: Aplicación web
+        Ejecutar como: Yo (hayzar@gmail.com)
+        Acceso: Cualquier persona
+   5. Autoriza los permisos y copia la URL de implementación.
+   6. Pégala en la constante SHEETS_ENDPOINT aquí abajo.
+   =========================================================== */
+const SHEETS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwvZL1gdsEaJhhXNprC-GMWfdWnrO5Bh44X09rIpKkeh9yuQlLB5v-xRZ80fOqxSJ3j/exec'; // ← Pega aquí la URL de Apps Script
+
+/* =========================================================
+   BANCO DE PREGUNTAS
+   ========================================================= */
+const questions = [
+  {
+    id: 1, section: "§16-2", topic: "Tipos de ondas",
+    text: `Una emisora de radio transmite una señal que viaja a través del espacio vacío hasta tu receptor. ¿Cuál de las siguientes afirmaciones describe <strong>correctamente</strong> este tipo de onda?`,
+    options: [
+      { key:"A", text:"Es una onda mecánica porque utiliza el aire como medio de propagación." },
+      { key:"B", text:"Es una onda electromagnética y puede propagarse en el vacío." },
+      { key:"C", text:"Es una onda de materia asociada a los electrones del circuito receptor." },
+      { key:"D", text:"Es una onda longitudinal que requiere un medio material para existir." }
+    ],
+    correct: "B",
+    feedback: `Las ondas de radio son <strong>electromagnéticas</strong>: no necesitan ningún medio material y viajan en el vacío a $c = 3{,}00\\times10^{8}$ m/s. Las ondas mecánicas (sonido, cuerda, sísmicas) sí requieren un medio y están gobernadas por las leyes de Newton.`
+  },
+  {
+    id: 2, section: "§16-2", topic: "Ondas mecánicas",
+    text: `¿Cuáles propiedades son características <strong>exclusivas</strong> de las <strong>ondas mecánicas</strong>, según Halliday, Resnick &amp; Walker?`,
+    options: [
+      { key:"A", text:"Viajan a la velocidad de la luz $c$ y no necesitan ningún medio." },
+      { key:"B", text:"Están gobernadas por las leyes de Newton y requieren un medio material." },
+      { key:"C", text:"Son siempre longitudinales y de alta frecuencia." },
+      { key:"D", text:"Se propagan en el vacío y pueden transportar cargas eléctricas." }
+    ],
+    correct: "B",
+    feedback: `Las ondas mecánicas tienen dos características centrales: <strong>(1)</strong> están gobernadas por las <em>leyes de Newton</em> y <strong>(2)</strong> solo pueden existir dentro de un <em>medio material</em> (agua, aire, roca, cuerda). Las ondas electromagnéticas no requieren medio alguno.`
+  },
+  {
+    id: 3, section: "§16-3", topic: "Transversal vs. longitudinal",
+    text: `Una onda en una cuerda tensa y una onda sonora en un tubo de aire son ambas mecánicas. ¿Cuál afirmación describe correctamente la diferencia en el movimiento de los elementos del medio?`,
+    options: [
+      { key:"A", text:"En ambas, los elementos del medio oscilan paralelos a la dirección de propagación." },
+      { key:"B", text:"En la onda de cuerda los elementos oscilan ⊥ a la propagación; en la onda sonora, paralelo a ella." },
+      { key:"C", text:"Solo las ondas longitudinales pueden transportar energía." },
+      { key:"D", text:"La onda transversal siempre se propaga más rápido que la longitudinal." }
+    ],
+    correct: "B",
+    feedback: `En una onda <strong>transversal</strong> (cuerda), cada elemento oscila <em>perpendicularmente</em> a la dirección de propagación. En una onda <strong>longitudinal</strong> (sonido), los elementos oscilan <em>paralelamente</em> a la propagación, generando compresiones y rarefacciones. Ambos tipos transportan energía.`
+  },
+  {
+    id: 4, section: "§16-4", topic: "Longitud de onda",
+    text: `La función de onda de una cuerda vibrante es:
+    <div class="math-block">$$y(x,t) = (0{,}050\\ \\text{m})\\sin(\\pi x - 2\\pi t)$$</div>
+    donde $x$ está en metros y $t$ en segundos. ¿Cuál es la longitud de onda $\\lambda$?`,
+    options: [
+      { key:"A", text:"$\\lambda = 0{,}50\\ \\text{m}$" },
+      { key:"B", text:"$\\lambda = 1{,}0\\ \\text{m}$" },
+      { key:"C", text:"$\\lambda = 2{,}0\\ \\text{m}$" },
+      { key:"D", text:"$\\lambda = \\pi\\ \\text{m}$" }
+    ],
+    correct: "C",
+    feedback: `Comparando con $y = y_m\\sin(kx-\\omega t)$ se identifica $k = \\pi\\ \\text{rad/m}$. Entonces: $$\\lambda = \\frac{2\\pi}{k} = \\frac{2\\pi}{\\pi} = 2{,}0\\ \\text{m}.$$`
+  },
+  {
+    id: 5, section: "§16-4", topic: "Período y frecuencia",
+    text: `Para la misma onda $y(x,t) = (0{,}050\\ \\text{m})\\sin(\\pi x - 2\\pi t)$, ¿cuál es la <strong>frecuencia</strong> $f$ de oscilación?`,
+    options: [
+      { key:"A", text:"$f = 0{,}50\\ \\text{Hz}$" },
+      { key:"B", text:"$f = 1{,}0\\ \\text{Hz}$" },
+      { key:"C", text:"$f = 2{,}0\\ \\text{Hz}$" },
+      { key:"D", text:"$f = 2\\pi\\ \\text{Hz}$" }
+    ],
+    correct: "B",
+    feedback: `La frecuencia angular es $\\omega = 2\\pi\\ \\text{rad/s}$. El período es $T = 2\\pi/\\omega = 1{,}0\\ \\text{s}$, y la frecuencia: $$f = \\frac{1}{T} = \\frac{\\omega}{2\\pi} = \\frac{2\\pi}{2\\pi} = 1{,}0\\ \\text{Hz}.$$`
+  },
+  {
+    id: 6, section: "§16-4/§16-5", topic: "Constante de fase",
+    text: `La función general de onda incluye una constante de fase $\\phi$:
+    <div class="math-block">$$y(x,t) = y_m\\sin(kx - \\omega t + \\phi).$$</div>
+    Si $\\phi = \\pi/2\\ \\text{rad}$, ¿en qué función equivalente se convierte $y$?`,
+    options: [
+      { key:"A", text:"$y = y_m\\cos(kx - \\omega t)$" },
+      { key:"B", text:"$y = -y_m\\sin(kx - \\omega t)$" },
+      { key:"C", text:"$y = y_m\\sin(kx - \\omega t - \\pi/2)$" },
+      { key:"D", text:"$y = y_m\\cos(kx + \\omega t)$" }
+    ],
+    correct: "A",
+    feedback: `Usando la identidad $\\sin(\\theta + \\pi/2) = \\cos\\theta$: $$y = y_m\\sin\\!\\bigl(kx-\\omega t + \\tfrac{\\pi}{2}\\bigr) = y_m\\cos(kx-\\omega t).$$ La constante de fase desplaza lateralmente la forma de onda un cuarto de longitud de onda.`
+  },
+  {
+    id: 7, section: "§16-5", topic: "Rapidez y dirección de onda",
+    text: `Para la onda $y(x,t) = (0{,}050\\ \\text{m})\\sin(\\pi x - 2\\pi t)$, ¿en qué <strong>dirección</strong> viaja la onda y cuál es su <strong>rapidez</strong> $v$?`,
+    options: [
+      { key:"A", text:"Dirección $+x$, $v = 1{,}0\\ \\text{m/s}$" },
+      { key:"B", text:"Dirección $+x$, $v = 2{,}0\\ \\text{m/s}$" },
+      { key:"C", text:"Dirección $-x$, $v = 2{,}0\\ \\text{m/s}$" },
+      { key:"D", text:"Dirección $+x$, $v = \\pi\\ \\text{m/s}$" }
+    ],
+    correct: "B",
+    feedback: `La forma $\\sin(kx - \\omega t)$ con signo <em>menos</em> indica propagación en $+x$. La rapidez: $$v = \\frac{\\omega}{k} = \\frac{2\\pi\\ \\text{rad/s}}{\\pi\\ \\text{rad/m}} = 2{,}0\\ \\text{m/s}.$$ También: $v = \\lambda f = (2{,}0)(1{,}0) = 2{,}0$ m/s.`
+  },
+  {
+    id: 8, section: "§16-5", topic: "Onda en dirección −x",
+    text: `¿Cuál de las siguientes funciones representa una onda sinusoidal que viaja en la dirección <strong>negativa</strong> del eje $x$?`,
+    options: [
+      { key:"A", text:"$y(x,t) = y_m\\sin(kx - \\omega t)$" },
+      { key:"B", text:"$y(x,t) = y_m\\sin(kx + \\omega t)$" },
+      { key:"C", text:"$y(x,t) = y_m\\sin(kx)\\cos(\\omega t)$" },
+      { key:"D", text:"$y(x,t) = y_m\\cos(kx)\\cos(\\omega t)$" }
+    ],
+    correct: "B",
+    feedback: `Para viaje en $-x$ la fase debe ser $kx + \\omega t = \\text{cte}$, lo que implica que $x$ decrece con el tiempo: $x = -(\\omega/k)t + \\text{cte}$. Las opciones C y D son <strong>ondas estacionarias</strong> (producto de función de $x$ por función de $t$), no ondas viajeras.`
+  },
+  {
+    id: 9, section: "§16-5", topic: "Velocidad transversal",
+    text: `Para una onda $y(x,t) = y_m\\sin(kx-\\omega t)$, la <strong>velocidad transversal</strong> $u$ de un elemento de la cuerda es la derivada parcial de $y$ respecto al tiempo. ¿Cuál es la expresión correcta?`,
+    options: [
+      { key:"A", text:"$u = k\\,y_m\\cos(kx - \\omega t)$" },
+      { key:"B", text:"$u = -\\omega\\,y_m\\cos(kx - \\omega t)$" },
+      { key:"C", text:"$u = \\omega\\,y_m\\sin(kx - \\omega t)$" },
+      { key:"D", text:"$u = k\\,y_m\\sin(kx - \\omega t)$" }
+    ],
+    correct: "B",
+    feedback: `Derivando respecto a $t$ (con $x$ fijo): $$u = \\frac{\\partial y}{\\partial t} = y_m\\cos(kx-\\omega t)\\cdot(-\\omega) = -\\omega\\,y_m\\cos(kx-\\omega t).$$ La opción A corresponde a $\\partial y/\\partial x$ (pendiente de la cuerda), no a la velocidad.`
+  },
+  {
+    id: 10, section: "§16-5", topic: "Velocidad transversal máxima",
+    text: `Una onda transversal tiene amplitud $y_m = 2{,}0\\ \\text{mm}$ y frecuencia angular $\\omega = 600\\ \\text{rad/s}$. ¿Cuál es la <strong>velocidad transversal máxima</strong> $u_{\\max}$ de un elemento de la cuerda?`,
+    options: [
+      { key:"A", text:"$u_{\\max} = 0{,}30\\ \\text{m/s}$" },
+      { key:"B", text:"$u_{\\max} = 0{,}60\\ \\text{m/s}$" },
+      { key:"C", text:"$u_{\\max} = 1{,}2\\ \\text{m/s}$" },
+      { key:"D", text:"$u_{\\max} = 300\\ \\text{m/s}$" }
+    ],
+    correct: "C",
+    feedback: `La velocidad máxima ocurre cuando $|\\cos(kx-\\omega t)| = 1$ (elemento en $y=0$): $$u_{\\max} = \\omega\\,y_m = (600\\ \\text{rad/s})(2{,}0\\times10^{-3}\\ \\text{m}) = 1{,}2\\ \\text{m/s}.$$ La opción D no convierte mm a m.`
+  },
+  {
+    id: 11, section: "§16-6", topic: "Rapidez en cuerda tensa",
+    text: `Una cuerda tiene densidad lineal $\\mu = 0{,}010\\ \\text{kg/m}$ y está bajo tensión $\\tau = 100\\ \\text{N}$. ¿Cuál es la rapidez de onda en la cuerda?`,
+    options: [
+      { key:"A", text:"$v = 10\\ \\text{m/s}$" },
+      { key:"B", text:"$v = 31{,}6\\ \\text{m/s}$" },
+      { key:"C", text:"$v = 100\\ \\text{m/s}$" },
+      { key:"D", text:"$v = 1000\\ \\text{m/s}$" }
+    ],
+    correct: "C",
+    feedback: `Aplicando la fórmula (ec. 16-26): $$v = \\sqrt{\\frac{\\tau}{\\mu}} = \\sqrt{\\frac{100\\ \\text{N}}{0{,}010\\ \\text{kg/m}}} = \\sqrt{10\,000} = 100\\ \\text{m/s}.$$ Esta rapidez depende <em>solo</em> de $\\tau$ y $\\mu$, no de la frecuencia.`
+  },
+  {
+    id: 12, section: "§16-6", topic: "Efecto de duplicar tensión",
+    text: `Una cuerda conduce ondas a rapidez $v$. Se <strong>duplica</strong> la tensión $\\tau$ manteniendo constante la densidad lineal $\\mu$. ¿Cómo cambia la rapidez de onda?`,
+    options: [
+      { key:"A", text:"Se duplica: $v_{\\text{nuevo}} = 2v$" },
+      { key:"B", text:"Se cuadruplica: $v_{\\text{nuevo}} = 4v$" },
+      { key:"C", text:"Aumenta por un factor de $\\sqrt{2}$: $v_{\\text{nuevo}} = \\sqrt{2}\\,v$" },
+      { key:"D", text:"No cambia, pues $v$ depende de la frecuencia, no de $\\tau$" }
+    ],
+    correct: "C",
+    feedback: `Como $v = \\sqrt{\\tau/\\mu}$, la rapidez es proporcional a la raíz de la tensión: $$\\frac{v_{\\text{nuevo}}}{v} = \\sqrt{\\frac{2\\tau}{\\tau}} = \\sqrt{2} \\approx 1{,}41.$$ Para <em>duplicar</em> la rapidez se necesitaría <strong>cuadruplicar</strong> la tensión.`
+  },
+  {
+    id: 13, section: "§16-6", topic: "Densidad lineal y rapidez",
+    text: `Una cuerda de longitud $\\ell = 4{,}0\\ \\text{m}$ tiene masa $m = 0{,}080\\ \\text{kg}$ y está bajo tensión $\\tau = 50\\ \\text{N}$. ¿Cuáles son la densidad lineal $\\mu$ y la rapidez de onda $v$?`,
+    options: [
+      { key:"A", text:"$\\mu = 0{,}020\\ \\text{kg/m},\\ v = 25\\ \\text{m/s}$" },
+      { key:"B", text:"$\\mu = 0{,}020\\ \\text{kg/m},\\ v = 50\\ \\text{m/s}$" },
+      { key:"C", text:"$\\mu = 0{,}020\\ \\text{kg/m},\\ v = 100\\ \\text{m/s}$" },
+      { key:"D", text:"$\\mu = 0{,}032\\ \\text{kg/m},\\ v = 39{,}5\\ \\text{m/s}$" }
+    ],
+    correct: "B",
+    feedback: `$\\mu = m/\\ell = 0{,}080/4{,}0 = 0{,}020\\ \\text{kg/m}$. Luego: $$v = \\sqrt{\\frac{\\tau}{\\mu}} = \\sqrt{\\frac{50}{0{,}020}} = \\sqrt{2500} = 50\\ \\text{m/s}.$$`
+  },
+  {
+    id: 14, section: "§16-7", topic: "Potencia y amplitud",
+    text: `La potencia promedio transmitida por una onda en una cuerda es $P_{\\text{avg}} = \\tfrac{1}{2}\\mu v\\,\\omega^2 y_m^2$. Si se <strong>duplica la amplitud</strong> $y_m$ (todo lo demás constante), ¿cómo cambia la potencia?`,
+    options: [
+      { key:"A", text:"Se duplica ($\\times 2$)" },
+      { key:"B", text:"Aumenta por $\\sqrt{2}$" },
+      { key:"C", text:"Se cuadruplica ($\\times 4$)" },
+      { key:"D", text:"No cambia, pues la potencia solo depende de $\\omega$" }
+    ],
+    correct: "C",
+    feedback: `Como $P_{\\text{avg}} \\propto y_m^2$, duplicar $y_m$ resulta en: $$\\frac{P_{\\text{nuevo}}}{P_{\\text{orig}}} = \\frac{(2y_m)^2}{y_m^2} = 4.$$ De modo análogo, duplicar $\\omega$ también cuadruplicaría la potencia ($P_{\\text{avg}}\\propto\\omega^2$).`
+  },
+  {
+    id: 15, section: "§16-7", topic: "Cálculo de potencia promedio",
+    text: `Una onda viaja en una cuerda con: $\\mu = 0{,}500\\ \\text{kg/m}$, $v = 10{,}0\\ \\text{m/s}$, $\\omega = 20{,}0\\ \\text{rad/s}$, $y_m = 0{,}10\\ \\text{m}$. ¿Cuál es la <strong>potencia promedio</strong> transmitida?`,
+    options: [
+      { key:"A", text:"$P_{\\text{avg}} = 5{,}0\\ \\text{W}$" },
+      { key:"B", text:"$P_{\\text{avg}} = 20{,}0\\ \\text{W}$" },
+      { key:"C", text:"$P_{\\text{avg}} = 10{,}0\\ \\text{W}$" },
+      { key:"D", text:"$P_{\\text{avg}} = 40{,}0\\ \\text{W}$" }
+    ],
+    correct: "C",
+    feedback: `$$P_{\\text{avg}} = \\tfrac{1}{2}(0{,}500)(10{,}0)(20{,}0)^2(0{,}10)^2 = \\tfrac{1}{2}(0{,}500)(10{,}0)(400)(0{,}010) = \\tfrac{1}{2}(20) = 10{,}0\\ \\text{W}.$$ La opción B olvida el factor $\\frac{1}{2}$.`
+  },
+  {
+    id: 16, section: "§16-7", topic: "Energía cinética máxima",
+    text: `Para una onda <strong>viajera</strong> en una cuerda, ¿en qué posición del elemento de cuerda es <strong>máxima</strong> la energía cinética?`,
+    options: [
+      { key:"A", text:"En $y = y_m$ (cresta), pues el desplazamiento es máximo." },
+      { key:"B", text:"En $y = 0$ (posición de equilibrio), pues la velocidad transversal es máxima allí." },
+      { key:"C", text:"En $y = y_m/\\sqrt{2}$, punto de igual energía cinética y potencial." },
+      { key:"D", text:"La energía cinética es la misma en todas las posiciones." }
+    ],
+    correct: "B",
+    feedback: `La energía cinética de un elemento es $dK = \\tfrac{1}{2}dm\\,u^2$. La velocidad $|u| = |-\\omega y_m\\cos(kx-\\omega t)|$ es máxima cuando $y = 0$ (elemento en equilibrio). En las crestas ($y = y_m$) la velocidad es cero y $K = 0$.`
+  },
+  {
+    id: 17, section: "§16-7", topic: "Energía cinética y potencial",
+    text: `En una onda <strong>viajera</strong> en una cuerda —a diferencia del oscilador masa–resorte— ¿qué sucede con la energía <strong>potencial elástica</strong> de un elemento cuando $y = 0$?`,
+    options: [
+      { key:"A", text:"Es cero, pues el elemento no está deformado en $y = 0$." },
+      { key:"B", text:"Es la mitad de su valor máximo, como en el oscilador masa–resorte." },
+      { key:"C", text:"Es máxima, porque el estiramiento local de la cuerda es máximo en $y = 0$." },
+      { key:"D", text:"Es igual a la energía cinética solo cuando $y = y_m/\\sqrt{2}$." }
+    ],
+    correct: "C",
+    feedback: `En una onda viajera, $K$ y $U$ son <strong>máximas simultáneamente</strong> en $y = 0$, y <strong>ambas son cero</strong> en $y = y_m$. Esto difiere del oscilador masa–resorte. Físicamente, en $y = 0$ la cuerda está más <em>estirada localmente</em>, almacenando máxima energía potencial.`
+  },
+  {
+    id: 18, section: "§16-8", topic: "Ecuación de onda",
+    text: `¿Cuál de las siguientes funciones <strong>NO</strong> satisface la ecuación de onda general
+    <div class="math-block">$$\\frac{\\partial^{2}y}{\\partial x^{2}} = \\frac{1}{v^{2}}\\frac{\\partial^{2}y}{\\partial t^{2}}\\;?$$</div>`,
+    options: [
+      { key:"A", text:"$y(x,t) = A\\sin(3x - 4t)$" },
+      { key:"B", text:"$y(x,t) = A\\cos(3x + 4t)$" },
+      { key:"C", text:"$y(x,t) = A\\sin(3x^{2} - 4t)$" },
+      { key:"D", text:"$y(x,t) = A\\sin(3x - 4t + \\pi/3)$" }
+    ],
+    correct: "C",
+    feedback: `Una onda viajera debe tener la forma $h(kx\\pm\\omega t)$ con $k$ y $\\omega$ constantes. En $A\\sin(3x^2 - 4t)$, la posición aparece al cuadrado: $\\partial^2 y/\\partial x^2$ depende de $x$, mientras que $\\partial^2 y/\\partial t^2$ no. No pueden ser iguales para todo $x$ y $t$.`
+  },
+  {
+    id: 19, section: "§16-8", topic: "Derivación de la ecuación de onda",
+    text: `La ecuación de onda $\\dfrac{\\partial^{2}y}{\\partial x^{2}} = \\dfrac{1}{v^{2}}\\dfrac{\\partial^{2}y}{\\partial t^{2}}$ fue derivada en el texto aplicando:`,
+    options: [
+      { key:"A", text:"La ley de conservación de energía a un elemento diferencial de cuerda." },
+      { key:"B", text:"El principio de superposición de ondas en el medio." },
+      { key:"C", text:"La segunda ley de Newton ($F = ma$) a un pequeño elemento de una cuerda tensa." },
+      { key:"D", text:"La definición de densidad lineal integrada a lo largo de toda la cuerda." }
+    ],
+    correct: "C",
+    feedback: `Se aplica $F_{\\text{net},y} = dm\\,a_y$ a un elemento $dm = \\mu\\,dx$. Las fuerzas son las componentes verticales de la tensión en cada extremo. Combinando con $v = \\sqrt{\\tau/\\mu}$ se obtiene: $$\\frac{\\partial^2 y}{\\partial x^2} = \\frac{\\mu}{\\tau}\\frac{\\partial^2 y}{\\partial t^2} = \\frac{1}{v^2}\\frac{\\partial^2 y}{\\partial t^2}.$$`
+  },
+  {
+    id: 20, section: "§16-8", topic: "Forma funcional de onda viajera",
+    text: `La función $y(x,t) = A(3x + 4t)^{2}$ es una onda viajera válida que satisface la ecuación de onda. ¿En qué <strong>dirección</strong> se propaga y cuál es su <strong>rapidez</strong>?`,
+    options: [
+      { key:"A", text:"Dirección $+x$ con $v = 4/3\\ \\text{m/s}$" },
+      { key:"B", text:"Dirección $+x$ con $v = 3/4\\ \\text{m/s}$" },
+      { key:"C", text:"No es una onda viajera pues no es sinusoidal" },
+      { key:"D", text:"Dirección $-x$ con $v = 4/3\\ \\text{m/s}$" }
+    ],
+    correct: "D",
+    feedback: `Toda función de la forma $h(kx + \\omega t)$ (signo <strong>más</strong>) viaja en $-x$. Con $k = 3$ y $\\omega = 4$: $$v = \\frac{\\omega}{k} = \\frac{4}{3}\\ \\text{m/s}.$$ Verificación: $3x + 4t = \\text{cte}\\Rightarrow x = -\\tfrac{4}{3}t + \\text{cte}$ (posición decrece con el tiempo). La onda viajera no requiere ser sinusoidal.`
+  }
+];
+
+/* =========================================================
+   AGRUPACIÓN POR SECCIONES (para diagnóstico)
+   ========================================================= */
+const sectionMeta = [
+  { label: "Tipos de ondas",           tag: "§16-2",          ids: [1,2] },
+  { label: "Transversal / Longitudinal", tag: "§16-3",         ids: [3] },
+  { label: "Longitud de onda, freq., fase", tag: "§16-4/§16-5", ids: [4,5,6,7,8] },
+  { label: "Velocidad transversal",    tag: "§16-5",           ids: [9,10] },
+  { label: "Rapidez en cuerda tensa", tag: "§16-6",            ids: [11,12,13] },
+  { label: "Energía y potencia",       tag: "§16-7",           ids: [14,15,16,17] },
+  { label: "Ecuación de onda",         tag: "§16-8",           ids: [18,19,20] }
+];
+
+/* =========================================================
+   BANCO DE PREGUNTAS 2 — SERIE B
+   ========================================================= */
+const questions2 = [
+  {
+    id: 1, section: "§16-2", topic: "Tipos de ondas",
+    text: `¿Cuál de las siguientes opciones <strong>NO</strong> es un ejemplo de onda mecánica?`,
+    options: [
+      { key:"A", text:"Ola en la superficie del mar producida por el viento." },
+      { key:"B", text:"Onda sísmica P que viaja por el manto terrestre." },
+      { key:"C", text:"Onda de radio emitida por un satélite en el vacío." },
+      { key:"D", text:"Onda sonora en una sala de conciertos." }
+    ],
+    correct: "C",
+    feedback: `Las ondas de radio son <strong>electromagnéticas</strong>: se propagan en el vacío sin necesitar ningún medio material. Las olas, las ondas sísmicas y el sonido son ondas <strong>mecánicas</strong>: existen solo dentro de un medio material y están gobernadas por las leyes de Newton.`
+  },
+  {
+    id: 2, section: "§16-2", topic: "Ondas mecánicas vs. electromagnéticas",
+    text: `¿Cuál es la diferencia fundamental entre una onda mecánica y una onda electromagnética?`,
+    options: [
+      { key:"A", text:"Las ondas mecánicas son siempre longitudinales; las electromagnéticas siempre transversales." },
+      { key:"B", text:"Las ondas mecánicas son más rápidas que las electromagnéticas en el vacío." },
+      { key:"C", text:"Las ondas mecánicas necesitan un medio material para propagarse; las electromagnéticas no." },
+      { key:"D", text:"Las ondas mecánicas son invisibles; las electromagnéticas son siempre visibles." }
+    ],
+    correct: "C",
+    feedback: `La característica definitoria de las <strong>ondas mecánicas</strong> es que requieren un medio material: la onda surge del desplazamiento de partículas que interactúan entre sí según las leyes de Newton. Las <strong>ondas electromagnéticas</strong> son perturbaciones del campo eléctrico y magnético, y se propagan en el vacío a $c = 3{,}00\\times10^8$ m/s.`
+  },
+  {
+    id: 3, section: "§16-3", topic: "Ondas sísmicas S",
+    text: `Las ondas sísmicas secundarias (S) son <strong>transversales</strong>. ¿Cuál de las siguientes afirmaciones sobre ellas es correcta?`,
+    options: [
+      { key:"A", text:"Las ondas S pueden propagarse a través de líquidos y sólidos por igual." },
+      { key:"B", text:"En las ondas S el movimiento del suelo es perpendicular a la dirección de propagación." },
+      { key:"C", text:"Las ondas S siempre viajan más rápido que las ondas P." },
+      { key:"D", text:"Las ondas S producen compresiones y rarefacciones del material." }
+    ],
+    correct: "B",
+    feedback: `Las ondas S son <strong>transversales</strong>: el desplazamiento del suelo es <em>perpendicular</em> a la dirección de propagación. No se propagan en líquidos (que no resisten esfuerzos de cizalla), lo que permite a los sismólogos identificar el núcleo externo líquido de la Tierra. Las compresiones y rarefacciones son características de ondas <strong>longitudinales</strong> (ondas P).`
+  },
+  {
+    id: 4, section: "§16-4", topic: "Número de onda y amplitud",
+    text: `La función de onda de una cuerda es:
+    <div class="math-block">$$y(x,t) = (0{,}030\\ \\text{m})\\sin(2\\pi x - 4\\pi t)$$</div>
+    donde $x$ está en metros y $t$ en segundos. ¿Cuáles son la amplitud $y_m$ y el número de onda $k$?`,
+    options: [
+      { key:"A", text:"$y_m = 0{,}030\\ \\text{m},\\ k = \\pi\\ \\text{rad/m}$" },
+      { key:"B", text:"$y_m = 0{,}030\\ \\text{m},\\ k = 2\\pi\\ \\text{rad/m}$" },
+      { key:"C", text:"$y_m = 0{,}060\\ \\text{m},\\ k = 4\\pi\\ \\text{rad/m}$" },
+      { key:"D", text:"$y_m = 0{,}030\\ \\text{m},\\ k = 4\\pi\\ \\text{rad/m}$" }
+    ],
+    correct: "B",
+    feedback: `Comparando con la forma estándar $y = y_m\\sin(kx - \\omega t)$: la amplitud es el coeficiente delante del seno, $y_m = 0{,}030$ m; el coeficiente de $x$ es el número de onda $k = 2\\pi$ rad/m; y $\\omega = 4\\pi$ rad/s es la frecuencia angular.`
+  },
+  {
+    id: 5, section: "§16-4", topic: "Período y frecuencia",
+    text: `Para la onda $y(x,t) = (0{,}030\\ \\text{m})\\sin(2\\pi x - 4\\pi t)$, ¿cuál es el <strong>período</strong> $T$?`,
+    options: [
+      { key:"A", text:"$T = 0{,}25\\ \\text{s}$" },
+      { key:"B", text:"$T = 0{,}50\\ \\text{s}$" },
+      { key:"C", text:"$T = 1{,}0\\ \\text{s}$" },
+      { key:"D", text:"$T = 2\\pi\\ \\text{s}$" }
+    ],
+    correct: "B",
+    feedback: `La frecuencia angular es $\\omega = 4\\pi$ rad/s. El período se obtiene de: $$T = \\frac{2\\pi}{\\omega} = \\frac{2\\pi}{4\\pi} = 0{,}50\\ \\text{s}.$$ La frecuencia es $f = 1/T = 2{,}0$ Hz.`
+  },
+  {
+    id: 6, section: "§16-4/§16-5", topic: "Dirección de propagación",
+    text: `Una onda viajera tiene función $y(x,t) = A\\sin(5x + 10t)$. ¿En qué <strong>dirección</strong> viaja la onda y cuál es su <strong>rapidez</strong>?`,
+    options: [
+      { key:"A", text:"Dirección $+x$, $v = 2{,}0\\ \\text{m/s}$" },
+      { key:"B", text:"Dirección $-x$, $v = 2{,}0\\ \\text{m/s}$" },
+      { key:"C", text:"Dirección $+x$, $v = 5{,}0\\ \\text{m/s}$" },
+      { key:"D", text:"Dirección $-x$, $v = 0{,}50\\ \\text{m/s}$" }
+    ],
+    correct: "B",
+    feedback: `La forma $\\sin(kx + \\omega t)$ con signo <strong>más</strong> corresponde a propagación en $-x$: fijando la fase $5x + 10t = \\text{cte}$, se obtiene $x = -(10/5)t + \\text{cte}$, es decir, la posición de la cresta <em>decrece</em> con el tiempo. La rapidez es $v = \\omega/k = 10/5 = 2{,}0$ m/s.`
+  },
+  {
+    id: 7, section: "§16-5", topic: "Rapidez de fase",
+    text: `Para la onda $y(x,t) = (0{,}030\\ \\text{m})\\sin(2\\pi x - 4\\pi t)$, ¿cuál es la <strong>rapidez de fase</strong> $v$?`,
+    options: [
+      { key:"A", text:"$v = \\pi\\ \\text{m/s}$" },
+      { key:"B", text:"$v = 1{,}0\\ \\text{m/s}$" },
+      { key:"C", text:"$v = 2{,}0\\ \\text{m/s}$" },
+      { key:"D", text:"$v = 4\\pi\\ \\text{m/s}$" }
+    ],
+    correct: "C",
+    feedback: `La rapidez de fase se calcula como: $$v = \\frac{\\omega}{k} = \\frac{4\\pi\\ \\text{rad/s}}{2\\pi\\ \\text{rad/m}} = 2{,}0\\ \\text{m/s}.$$ Verificación: $\\lambda = 2\\pi/k = 1{,}0$ m, $f = 2{,}0$ Hz, $v = \\lambda f = 2{,}0$ m/s. ✓`
+  },
+  {
+    id: 8, section: "§16-5", topic: "Constante de fase negativa",
+    text: `Si a la función $y = y_m\\sin(kx - \\omega t)$ se le aplica $\\phi = -\\tfrac{\\pi}{2}$ rad, la función $y = y_m\\sin(kx - \\omega t - \\tfrac{\\pi}{2})$ equivale a:`,
+    options: [
+      { key:"A", text:"$y = y_m\\cos(kx - \\omega t)$" },
+      { key:"B", text:"$y = -y_m\\cos(kx - \\omega t)$" },
+      { key:"C", text:"$y = y_m\\sin(kx - \\omega t + \\pi)$" },
+      { key:"D", text:"$y = y_m\\cos(kx + \\omega t)$" }
+    ],
+    correct: "B",
+    feedback: `Usando la identidad trigonométrica $\\sin(\\theta - \\pi/2) = -\\cos(\\theta)$: $$y = y_m\\sin\\!\\bigl(kx - \\omega t - \\tfrac{\\pi}{2}\\bigr) = -y_m\\cos(kx - \\omega t).$$ La constante de fase $\\phi$ desplaza la onda $\\phi/k$ unidades en el eje $x$.`
+  },
+  {
+    id: 9, section: "§16-5", topic: "Aceleración transversal",
+    text: `Para una onda $y(x,t) = y_m\\sin(kx - \\omega t)$, la <strong>aceleración transversal</strong> $a$ de un elemento de la cuerda es $\\partial^2 y/\\partial t^2$. ¿Cuál es la expresión correcta?`,
+    options: [
+      { key:"A", text:"$a = -\\omega^2\\,y_m\\sin(kx - \\omega t) = -\\omega^2 y$" },
+      { key:"B", text:"$a = \\omega^2\\,y_m\\sin(kx - \\omega t) = \\omega^2 y$" },
+      { key:"C", text:"$a = -k^2\\,y_m\\sin(kx - \\omega t)$" },
+      { key:"D", text:"$a = k\\,y_m\\cos(kx - \\omega t)$" }
+    ],
+    correct: "A",
+    feedback: `Derivando dos veces respecto a $t$: $$a = \\frac{\\partial^2 y}{\\partial t^2} = \\frac{\\partial}{\\partial t}\\bigl[-\\omega y_m\\cos(kx-\\omega t)\\bigr] = -\\omega^2 y_m\\sin(kx-\\omega t) = -\\omega^2 y.$$ Es análogo al MAS: $a = -\\omega^2 y$. La aceleración es máxima en las crestas y nula en el equilibrio.`
+  },
+  {
+    id: 10, section: "§16-5", topic: "Velocidad transversal máxima",
+    text: `Una onda transversal tiene amplitud $y_m = 5{,}0\\ \\text{cm}$ y frecuencia $f = 10\\ \\text{Hz}$. ¿Cuál es la <strong>velocidad transversal máxima</strong> $u_{\\max}$?`,
+    options: [
+      { key:"A", text:"$u_{\\max} = 0{,}50\\ \\text{m/s}$" },
+      { key:"B", text:"$u_{\\max} = \\pi\\ \\text{m/s}$" },
+      { key:"C", text:"$u_{\\max} = 2\\pi\\ \\text{m/s}$" },
+      { key:"D", text:"$u_{\\max} = 50\\pi\\ \\text{m/s}$" }
+    ],
+    correct: "B",
+    feedback: `La frecuencia angular: $\\omega = 2\\pi f = 2\\pi(10) = 20\\pi$ rad/s. La velocidad máxima ocurre en $y = 0$: $$u_{\\max} = \\omega\\,y_m = (20\\pi\\ \\text{rad/s})(0{,}050\\ \\text{m}) = \\pi\\ \\text{m/s} \\approx 3{,}14\\ \\text{m/s}.$$ Recuerda convertir $y_m$ a metros.`
+  },
+  {
+    id: 11, section: "§16-6", topic: "Comparación de rapideces",
+    text: `¿En cuál de los siguientes casos la onda en una cuerda tensa es más rápida?`,
+    options: [
+      { key:"A", text:"$\\mu = 0{,}010\\ \\text{kg/m},\\ \\tau = 100\\ \\text{N}$" },
+      { key:"B", text:"$\\mu = 0{,}040\\ \\text{kg/m},\\ \\tau = 100\\ \\text{N}$" },
+      { key:"C", text:"$\\mu = 0{,}010\\ \\text{kg/m},\\ \\tau = 25\\ \\text{N}$" },
+      { key:"D", text:"$\\mu = 0{,}020\\ \\text{kg/m},\\ \\tau = 50\\ \\text{N}$" }
+    ],
+    correct: "A",
+    feedback: `Calculando $v = \\sqrt{\\tau/\\mu}$ para cada caso:
+    A) $\\sqrt{100/0{,}010} = \\sqrt{10000} = 100$ m/s,
+    B) $\\sqrt{100/0{,}040} = 50$ m/s,
+    C) $\\sqrt{25/0{,}010} = 50$ m/s,
+    D) $\\sqrt{50/0{,}020} = 50$ m/s.
+    El caso A es el más rápido porque tiene la <em>mayor</em> relación $\\tau/\\mu$.`
+  },
+  {
+    id: 12, section: "§16-6", topic: "Efecto de duplicar densidad",
+    text: `Una cuerda conduce ondas a rapidez $v$. Se <strong>duplica</strong> la densidad lineal $\\mu$ manteniendo constante la tensión $\\tau$. ¿Cómo cambia la rapidez?`,
+    options: [
+      { key:"A", text:"Se duplica: $v_{\\text{nuevo}} = 2v$" },
+      { key:"B", text:"Se reduce a la mitad: $v_{\\text{nuevo}} = v/2$" },
+      { key:"C", text:"Disminuye por un factor $\\sqrt{2}$: $v_{\\text{nuevo}} = v/\\sqrt{2}$" },
+      { key:"D", text:"No cambia porque $v$ depende solo de $\\tau$" }
+    ],
+    correct: "C",
+    feedback: `Como $v = \\sqrt{\\tau/\\mu}$, duplicar $\\mu$ da: $$\\frac{v_{\\text{nuevo}}}{v} = \\sqrt{\\frac{\\tau}{2\\mu}} \\cdot \\frac{1}{\\sqrt{\\tau/\\mu}} = \\frac{1}{\\sqrt{2}} \\approx 0{,}707.$$ Para <em>reducir a la mitad</em> la rapidez se necesitaría <strong>cuadruplicar</strong> $\\mu$ (o reducir $\\tau$ a un cuarto).`
+  },
+  {
+    id: 13, section: "§16-6", topic: "Calcular tensión",
+    text: `Una cuerda de densidad lineal $\\mu = 0{,}025\\ \\text{kg/m}$ conduce ondas a $v = 40{,}0\\ \\text{m/s}$. ¿Cuál es la <strong>tensión</strong> $\\tau$ en la cuerda?`,
+    options: [
+      { key:"A", text:"$\\tau = 1{,}0\\ \\text{N}$" },
+      { key:"B", text:"$\\tau = 16\\ \\text{N}$" },
+      { key:"C", text:"$\\tau = 40\\ \\text{N}$" },
+      { key:"D", text:"$\\tau = 1600\\ \\text{N}$" }
+    ],
+    correct: "C",
+    feedback: `Despejando la tensión de $v = \\sqrt{\\tau/\\mu}$: $$\\tau = v^2\\,\\mu = (40{,}0\\ \\text{m/s})^2 \\times (0{,}025\\ \\text{kg/m}) = 1600 \\times 0{,}025 = 40\\ \\text{N}.$$`
+  },
+  {
+    id: 14, section: "§16-7", topic: "Potencia y frecuencia",
+    text: `La potencia promedio es $P_{\\text{avg}} = \\tfrac{1}{2}\\mu v\\,\\omega^2 y_m^2$. Si se <strong>duplica la frecuencia</strong> $f$ (manteniendo todo lo demás constante), ¿cómo cambia $P_{\\text{avg}}$?`,
+    options: [
+      { key:"A", text:"Se duplica ($\\times 2$)" },
+      { key:"B", text:"Se cuadruplica ($\\times 4$)" },
+      { key:"C", text:"Aumenta por $\\sqrt{2}$" },
+      { key:"D", text:"No cambia" }
+    ],
+    correct: "B",
+    feedback: `Como $P_{\\text{avg}} \\propto \\omega^2$ y $\\omega = 2\\pi f$, duplicar $f$ duplica $\\omega$: $$\\frac{P_{\\text{nuevo}}}{P_{\\text{orig}}} = \\frac{(2\\omega)^2}{\\omega^2} = 4.$$ La potencia se <strong>cuadruplica</strong>. Este es el mismo efecto que duplicar la amplitud, porque también $P_{\\text{avg}} \\propto y_m^2$.`
+  },
+  {
+    id: 15, section: "§16-7", topic: "Potencia promedio numérica",
+    text: `Una cuerda tiene $\\mu = 0{,}050\\ \\text{kg/m}$, $v = 8{,}0\\ \\text{m/s}$, $\\omega = 40{,}0\\ \\text{rad/s}$, $y_m = 0{,}10\\ \\text{m}$. ¿Cuál es la <strong>potencia promedio</strong> transmitida?`,
+    options: [
+      { key:"A", text:"$P_{\\text{avg}} = 1{,}6\\ \\text{W}$" },
+      { key:"B", text:"$P_{\\text{avg}} = 3{,}2\\ \\text{W}$" },
+      { key:"C", text:"$P_{\\text{avg}} = 6{,}4\\ \\text{W}$" },
+      { key:"D", text:"$P_{\\text{avg}} = 12{,}8\\ \\text{W}$" }
+    ],
+    correct: "B",
+    feedback: `$$P_{\\text{avg}} = \\tfrac{1}{2}\\mu v\\,\\omega^2 y_m^2 = \\tfrac{1}{2}(0{,}050)(8{,}0)(40{,}0)^2(0{,}10)^2$$
+    $$= \\tfrac{1}{2}(0{,}050)(8{,}0)(1600)(0{,}010) = \\tfrac{1}{2}(6{,}4) = 3{,}2\\ \\text{W}.$$ La opción C olvida el factor $\\tfrac{1}{2}$.`
+  },
+  {
+    id: 16, section: "§16-7", topic: "Onda estacionaria vs. viajera",
+    text: `En una onda <strong>estacionaria</strong> (a diferencia de una viajera), ¿qué relación existe entre la energía cinética $K$ y la energía potencial $U$ de un elemento?`,
+    options: [
+      { key:"A", text:"$K$ y $U$ son máximas simultáneamente en $y = 0$, igual que en la viajera." },
+      { key:"B", text:"$K$ es máxima cuando $U = 0$ (en $y = 0$) y $U$ es máxima cuando $K = 0$ (en $y = y_m$)." },
+      { key:"C", text:"$K$ y $U$ son siempre iguales en todo instante." },
+      { key:"D", text:"No existe energía potencial en ondas estacionarias." }
+    ],
+    correct: "B",
+    feedback: `En una <strong>onda estacionaria</strong>, $K$ y $U$ oscilan en <em>oposición de fase</em>: cuando $K$ es máxima (en $y=0$), $U = 0$, y viceversa — igual que en el oscilador masa-resorte. En cambio, en una <strong>onda viajera</strong>, $K$ y $U$ son máximas <em>simultáneamente</em> en $y = 0$ y ambas cero en $y = y_m$.`
+  },
+  {
+    id: 17, section: "§16-7", topic: "Potencia instantánea",
+    text: `La potencia instantánea transmitida a través de un punto de la cuerda es $P(x,t) = F_y \\cdot u$, donde $F_y$ es la componente transversal de la tensión. ¿Cuál es la expresión correcta?`,
+    options: [
+      { key:"A", text:"$P(x,t) = -\\tau\\dfrac{\\partial y}{\\partial x}\\dfrac{\\partial y}{\\partial t}$" },
+      { key:"B", text:"$P(x,t) = \\tau\\left(\\dfrac{\\partial y}{\\partial t}\\right)^{\\!2}$" },
+      { key:"C", text:"$P(x,t) = \\mu\\,v\\left(\\dfrac{\\partial y}{\\partial x}\\right)^{\\!2}$" },
+      { key:"D", text:"$P(x,t) = \\tfrac{1}{2}\\mu v^3\\left(\\dfrac{\\partial y}{\\partial x}\\right)^{\\!2}$" }
+    ],
+    correct: "A",
+    feedback: `La componente transversal de la tensión es $F_y \\approx -\\tau(\\partial y/\\partial x)$ (para pequeñas amplitudes). La velocidad transversal es $u = \\partial y/\\partial t$. Entonces: $$P = F_y \\cdot u = -\\tau\\frac{\\partial y}{\\partial x}\\frac{\\partial y}{\\partial t}.$$ Al promediar en el tiempo se obtiene $P_{\\text{avg}} = \\tfrac{1}{2}\\mu v\\,\\omega^2 y_m^2$.`
+  },
+  {
+    id: 18, section: "§16-8", topic: "Soluciones de la ecuación de onda",
+    text: `La función $y(x,t) = A\\,e^{-(bx+ct)^2}$ (con $b,c > 0$) satisface la ecuación de onda. ¿Cuál es la velocidad de propagación y en qué dirección viaja?`,
+    options: [
+      { key:"A", text:"No la satisface porque no es sinusoidal." },
+      { key:"B", text:"$v = b/c$ en dirección $+x$." },
+      { key:"C", text:"$v = c/b$ en dirección $-x$." },
+      { key:"D", text:"$v = c/b$ en dirección $+x$." }
+    ],
+    correct: "C",
+    feedback: `La función es de la forma $h(bx + ct) = h\\bigl[b(x + (c/b)t)\\bigr]$, que corresponde a una función de $(x + vt)$ con $v = c/b$ — señal de propagación en $-x$. Toda función de la forma $h(kx \\pm \\omega t)$ con $v = \\omega/k$ satisface la ecuación de onda, no solo las sinusoidales.`
+  },
+  {
+    id: 19, section: "§16-8", topic: "Forma de la ecuación de onda",
+    text: `¿Cuál de las siguientes es la <strong>ecuación de onda lineal</strong> estándar para una perturbación $y(x,t)$ que viaja con velocidad $v$?`,
+    options: [
+      { key:"A", text:"$\\dfrac{\\partial y}{\\partial t} = v^2\\dfrac{\\partial y}{\\partial x}$" },
+      { key:"B", text:"$\\dfrac{\\partial^2 y}{\\partial t^2} = v\\dfrac{\\partial^2 y}{\\partial x^2}$" },
+      { key:"C", text:"$\\dfrac{\\partial^2 y}{\\partial x^2} = \\dfrac{1}{v^2}\\dfrac{\\partial^2 y}{\\partial t^2}$" },
+      { key:"D", text:"$\\dfrac{\\partial^2 y}{\\partial t^2} = v^2\\dfrac{\\partial y}{\\partial x}$" }
+    ],
+    correct: "C",
+    feedback: `La ecuación de onda de segundo orden es: $$\\frac{\\partial^2 y}{\\partial x^2} = \\frac{1}{v^2}\\frac{\\partial^2 y}{\\partial t^2},$$ equivalente a $v^2(\\partial^2 y/\\partial x^2) = \\partial^2 y/\\partial t^2$. Es una ecuación <strong>lineal</strong> (superposición válida) e implica que $v^2 = \\tau/\\mu$ para cuerdas, $v^2 = B/\\rho$ para fluidos, etc.`
+  },
+  {
+    id: 20, section: "§16-8", topic: "Principio de superposición",
+    text: `Dos ondas viajeras $y_1(x,t)$ e $y_2(x,t)$ satisfacen individualmente la ecuación de onda. Según el principio de <strong>superposición</strong>, ¿qué se puede afirmar sobre $y = y_1 + y_2$?`,
+    options: [
+      { key:"A", text:"Su suma no satisface la ecuación de onda porque las ondas se afectan mutuamente." },
+      { key:"B", text:"Su suma satisface la ecuación de onda solo si tienen la misma amplitud." },
+      { key:"C", text:"Su suma $y = y_1 + y_2$ también satisface la ecuación de onda." },
+      { key:"D", text:"El principio de superposición solo aplica a ondas electromagnéticas." }
+    ],
+    correct: "C",
+    feedback: `La <strong>ecuación de onda es lineal</strong>: si $y_1$ e $y_2$ la satisfacen, su suma $y = y_1 + y_2$ también lo hace. Esto se verifica directamente al substituir en la ecuación y usar linealidad de las derivadas. El principio de superposición es la base de la interferencia, los batidos y las ondas estacionarias.`
+  }
+];
+
+/* =========================================================
+   AGRUPACIÓN SECCIONES — SERIE B
+   ========================================================= */
+const sectionMeta2 = [
+  { label: "Tipos de ondas",               tag: "§16-2",          ids: [1,2] },
+  { label: "Transversal / Longitudinal",   tag: "§16-3",          ids: [3] },
+  { label: "Longitud de onda, freq., fase",tag: "§16-4/§16-5",   ids: [4,5,6,7,8] },
+  { label: "Velocidad transversal",        tag: "§16-5",          ids: [9,10] },
+  { label: "Rapidez en cuerda tensa",      tag: "§16-6",          ids: [11,12,13] },
+  { label: "Energía y potencia",           tag: "§16-7",          ids: [14,15,16,17] },
+  { label: "Ecuación de onda",             tag: "§16-8",          ids: [18,19,20] }
+];
+
+/* =========================================================
+   ESTADO DE LA APP
+   ========================================================= */
+let activeQuestions  = questions;   // banco activo (se actualiza en startTest)
+let activeSectionMeta = sectionMeta; // meta activa
+let state = {
+  currentQ   : 0,
+  answers    : new Array(20).fill(null),
+  startTime  : null,
+  timerID    : null,
+  totalSecs  : 40 * 60,
+  secsLeft   : 40 * 60,
+  studentName: "",
+  studentCode: "",
+  testName   : "Prueba 1"
+};
+
+/* =========================================================
+   NAVEGACIÓN ENTRE PANTALLAS
+   ========================================================= */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goToInstructions() {
+  const name = document.getElementById('inputName').value.trim();
+  if (!name) { alert("Por favor ingresa tu nombre completo."); return; }
+  state.studentName = name;
+  state.studentCode = document.getElementById('inputCode').value.trim();
+  showScreen('screenInstructions');
+}
+
+/* =========================================================
+   INICIO DE LA PRUEBA
+   ========================================================= */
+function startTest(bankNum) {
+  // Seleccionar banco de preguntas
+  if (bankNum === 2) {
+    activeQuestions   = questions2;
+    activeSectionMeta = sectionMeta2;
+    state.testName    = "Prueba 2 — Serie B";
+  } else {
+    activeQuestions   = questions;
+    activeSectionMeta = sectionMeta;
+    state.testName    = "Prueba 1 — Serie A";
+  }
+
+  state.currentQ  = 0;
+  state.answers   = new Array(20).fill(null);
+  state.secsLeft  = state.totalSecs;
+  state.startTime = Date.now();
+
+  buildPalette();
+  renderQuestion(0);
+  showScreen('screenTest');
+  document.getElementById('timerChip').style.display = 'flex';
+  startTimer();
+}
+
+/* =========================================================
+   TEMPORIZADOR
+   ========================================================= */
+function startTimer() {
+  if (state.timerID) clearInterval(state.timerID);
+  updateTimerDisplay();
+  state.timerID = setInterval(() => {
+    state.secsLeft--;
+    updateTimerDisplay();
+    if (state.secsLeft <= 0) {
+      clearInterval(state.timerID);
+      submitTest();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const mins = Math.floor(state.secsLeft / 60);
+  const secs = state.secsLeft % 60;
+  const chip = document.getElementById('timerChip');
+  document.getElementById('timerDisplay').textContent =
+    String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+  chip.className = 'timer-chip';
+  if (state.secsLeft <= 300 && state.secsLeft > 60) chip.classList.add('warning');
+  if (state.secsLeft <= 60)  chip.classList.add('danger');
+}
+
+/* =========================================================
+   RENDERIZADO DE PREGUNTA
+   ========================================================= */
+function renderQuestion(idx) {
+  state.currentQ = idx;
+  const q = activeQuestions[idx];
+  const panel = document.getElementById('questionPanel');
+
+  const selectedAns = state.answers[idx];
+
+  panel.innerHTML = `
+    <div class="q-meta">
+      <span class="q-number-chip">Pregunta ${idx+1} de 20</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <span class="q-section-chip">${q.section}</span>
+        <span class="q-topic-chip">${q.topic}</span>
+      </div>
+    </div>
+    <div class="q-text">${q.text}</div>
+    <div class="options-list">
+      ${q.options.map(opt => `
+        <div class="option-card ${selectedAns === opt.key ? 'selected' : ''}"
+             onclick="selectAnswer(${idx}, '${opt.key}')">
+          <div class="opt-letter">${opt.key}</div>
+          <div class="opt-text">${opt.text}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="q-nav">
+      <button class="btn-nav" onclick="goQuestion(${idx-1})" ${idx===0?'disabled':''}>
+        &#8592; Anterior
+      </button>
+      <span style="font-size:.82rem;color:var(--col-muted);">
+        ${idx+1} / 20
+      </span>
+      <button class="btn-nav next" onclick="goQuestion(${idx+1})" ${idx===19?'disabled':''}>
+        Siguiente &#8594;
+      </button>
+    </div>
+  `;
+
+  renderMath(panel);
+  updatePalette();
+  updateProgress();
+}
+
+function goQuestion(idx) {
+  if (idx < 0 || idx > 19) return;
+  renderQuestion(idx);
+}
+
+/* =========================================================
+   SELECCIÓN DE RESPUESTA
+   ========================================================= */
+function selectAnswer(qIdx, key) {
+  state.answers[qIdx] = key;
+  // Actualizar visual de las opciones
+  document.querySelectorAll('.option-card').forEach((el, i) => {
+    el.classList.remove('selected');
+    el.querySelector('.opt-letter').style.background = '';
+    el.querySelector('.opt-letter').style.color = '';
+    el.querySelector('.opt-letter').style.borderColor = '';
+  });
+  const cards = document.querySelectorAll('.option-card');
+  const q = activeQuestions[qIdx];
+  q.options.forEach((opt, i) => {
+    if (opt.key === key) {
+      cards[i].classList.add('selected');
+    }
+  });
+  updatePalette();
+  updateProgress();
+}
+
+/* =========================================================
+   PALETA DE NAVEGACIÓN
+   ========================================================= */
+function buildPalette() {
+  const palette = document.getElementById('qPalette');
+  palette.innerHTML = activeQuestions.map((q, i) => `
+    <button class="q-btn ${i === state.currentQ ? 'current' : ''}"
+            id="qbtn-${i}" onclick="goQuestion(${i})">${i+1}</button>
+  `).join('');
+}
+
+function updatePalette() {
+  activeQuestions.forEach((q, i) => {
+    const btn = document.getElementById(`qbtn-${i}`);
+    if (!btn) return;
+    btn.className = 'q-btn';
+    if (state.answers[i] !== null) btn.classList.add('answered');
+    if (i === state.currentQ)      btn.classList.add('current');
+  });
+}
+
+function updateProgress() {
+  const answered = state.answers.filter(a => a !== null).length;
+  const pct = (answered / 20) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${answered} / 20 respondidas`;
+}
+
+/* =========================================================
+   ENTREGA
+   ========================================================= */
+function confirmSubmit() {
+  const unanswered = state.answers.filter(a => a === null).length;
+  const msg = unanswered > 0
+    ? `Tienes <strong>${unanswered}</strong> pregunta(s) sin responder. ¿Deseas entregar de todas formas?`
+    : `Has respondido todas las preguntas. ¿Confirmas la entrega?`;
+  document.getElementById('submitModalMsg').innerHTML = msg;
+  document.getElementById('submitModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('submitModal').classList.remove('open');
+}
+
+function submitTest() {
+  closeModal();
+  clearInterval(state.timerID);
+  document.getElementById('timerChip').style.display = 'none';
+  const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+  showResults(elapsed);
+}
+
+/* =========================================================
+   RESULTADOS
+   ========================================================= */
+function showResults(elapsedSecs) {
+  showScreen('screenResults');
+
+  // ---- Calcular puntaje global ----
+  let correct = 0;
+  const resultByQ = activeQuestions.map((q, i) => ({
+    ...q,
+    given   : state.answers[i],
+    isRight : state.answers[i] === q.correct
+  }));
+  resultByQ.forEach(r => { if (r.isRight) correct++; });
+  const raw     = correct;
+  const pct     = Math.round((correct / 20) * 100);
+  const score   = pct; // Escala ICFES 0–100
+
+  // Nivel de desempeño
+  let level, levelClass, levelIcon;
+  if      (score >= 71) { level = "Avanzado";      levelClass = "avanzado";      levelIcon = "🏆"; }
+  else if (score >= 51) { level = "Satisfactorio";  levelClass = "satisfactorio"; levelIcon = "✅"; }
+  else if (score >= 36) { level = "Mínimo";         levelClass = "minimo";        levelIcon = "⚠️"; }
+  else                  { level = "Insuficiente";   levelClass = "insuficiente";  levelIcon = "❌"; }
+
+  // ---- Puntaje por sección ----
+  const sectionResults = activeSectionMeta.map(sec => {
+    const total   = sec.ids.length;
+    const corr    = sec.ids.filter(id => resultByQ[id-1].isRight).length;
+    const secPct  = Math.round((corr / total) * 100);
+    return { ...sec, total, corr, secPct };
+  });
+
+  // ---- Tiempo ----
+  const mins = Math.floor(elapsedSecs / 60);
+  const secs = elapsedSecs % 60;
+  const timeStr = `${mins}m ${secs}s`;
+
+  // ---- Guardar en localStorage y Google Sheets ----
+  const record = {
+    timestamp    : Date.now(),
+    name         : state.studentName,
+    code         : state.studentCode,
+    semester     : document.getElementById('inputSemester')?.value || '',
+    testName     : state.testName,
+    score,
+    correct      : raw,
+    time         : timeStr,
+    level,
+    sectionScores: sectionResults.map(s => ({ tag: s.tag, pct: s.secPct })),
+    answers      : state.answers
+  };
+  saveResult(record);
+  renderHistory();
+
+  // ---- Diagnóstico ----
+  const weakSections = sectionResults.filter(s => s.secPct < 50).map(s => s.label);
+  const strongSections = sectionResults.filter(s => s.secPct >= 75).map(s => s.label);
+  let diagText = `<strong>${state.studentName}</strong>, obtuviste <strong>${raw}/20 correctas</strong> en un tiempo de <strong>${timeStr}</strong>. `;
+
+  if (score >= 71) {
+    diagText += `Tu desempeño es <strong>Avanzado</strong>: demuestras sólido dominio de los conceptos de ondas mecánicas del Capítulo 16. `;
+  } else if (score >= 51) {
+    diagText += `Tu desempeño es <strong>Satisfactorio</strong>: comprendes los conceptos fundamentales, aunque hay aspectos que puedes fortalecer. `;
+  } else if (score >= 36) {
+    diagText += `Tu desempeño es <strong>Mínimo</strong>: manejas algunos conceptos básicos, pero es necesario reforzar varios temas. `;
+  } else {
+    diagText += `Tu desempeño es <strong>Insuficiente</strong>: se recomienda revisar el material desde los fundamentos. `;
+  }
+
+  if (strongSections.length > 0) {
+    diagText += `<br/><br/>&#128994; <strong>Fortalezas:</strong> ${strongSections.join(', ')}. `;
+  }
+  if (weakSections.length > 0) {
+    diagText += `<br/>&#128308; <strong>Áreas a reforzar:</strong> ${weakSections.join(', ')}. Revisa las secciones correspondientes en HRW y practica con los problemas del libro.`;
+  } else {
+    diagText += `<br/>&#127881; ¡Excelente manejo en todas las secciones!`;
+  }
+
+  // ---- Revisión por pregunta ----
+  const reviewHTML = resultByQ.map((r, i) => {
+    const shortText = stripMath(r.text).substring(0, 100) + '...';
+    const givenText = r.given ? `Tu resp.: <span class="your-ans">${r.given}</span>` : `Sin responder`;
+    const correctOptText = r.options.find(o => o.key === r.correct)?.text || '';
+    return `
+      <div class="review-item ${r.isRight ? 'correct' : 'incorrect'}" id="review-${i}">
+        <div class="review-item-header" onclick="toggleReview(${i})">
+          <span class="review-status">${r.isRight ? '✅' : '❌'}</span>
+          <span class="review-q-num">P${i+1}</span>
+          <span class="review-q-text">${escapeHtml(stripMath(r.text)).substring(0,90)}${r.text.length>90?'…':''}</span>
+          <span class="review-answer">
+            ${!r.isRight ? `<span class="your-ans">${r.given || '—'}</span> →` : ''}
+            <span class="correct-ans">✓ ${r.correct}</span>
+          </span>
+        </div>
+        ${!r.isRight ? `
+        <div class="review-detail" id="detail-${i}">
+          <div class="correct-opt">✅ Opción correcta (${r.correct}): ${correctOptText}</div>
+          <div class="fb-label">Retroalimentación</div>
+          <div>${r.feedback}</div>
+        </div>` : `
+        <div class="review-detail" id="detail-${i}">
+          <div class="fb-label">Bien hecho — Retroalimentación</div>
+          <div>${r.feedback}</div>
+        </div>`}
+      </div>
+    `;
+  }).join('');
+
+  // ---- SVG del círculo de puntaje ----
+  const R = 54, circ = 2 * Math.PI * R;
+  const dashArr = (pct/100) * circ;
+  const circleColor = score >= 71 ? '#059669' : score >= 51 ? '#2563EB' : score >= 36 ? '#d97706' : '#dc2626';
+
+  // ---- Generar HTML de resultados ----
+  document.getElementById('resultsContent').innerHTML = `
+    <!-- HERO -->
+    <div class="score-hero">
+      <div class="score-circle">
+        <svg viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="${R}" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="10"/>
+          <circle cx="60" cy="60" r="${R}" fill="none" stroke="${circleColor}"
+                  stroke-width="10" stroke-linecap="round"
+                  stroke-dasharray="${dashArr.toFixed(1)} ${circ.toFixed(1)}"/>
+        </svg>
+        <div class="score-num">
+          <span class="big">${score}</span>
+          <span class="small">/ 100</span>
+        </div>
+      </div>
+      <div class="score-info">
+        <div class="student-name">${state.studentName}</div>
+        <div class="score-sub">
+          ${state.studentCode ? `Código: ${state.studentCode} &nbsp;·&nbsp;` : ''}
+          ${state.testName} &nbsp;·&nbsp; Física de Ondas — Cap. 16
+        </div>
+        <div class="level-badge ${levelClass}">${levelIcon} Nivel: ${level}</div>
+        <div class="score-stats">
+          <div class="score-stat">
+            <div class="val">${raw}</div>
+            <div class="lbl">CORRECTAS</div>
+          </div>
+          <div class="score-stat">
+            <div class="val">${20-raw}</div>
+            <div class="lbl">INCORRECTAS</div>
+          </div>
+          <div class="score-stat">
+            <div class="val">${timeStr}</div>
+            <div class="lbl">TIEMPO</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESEMPEÑO POR SECCIÓN -->
+    <div class="result-card">
+      <h3>📊 Desempeño por sección</h3>
+      <div class="section-bars">
+        ${sectionResults.map(sec => {
+          const fillClass = sec.secPct >= 75 ? 'good' : sec.secPct >= 40 ? 'mid' : 'bad';
+          return `
+            <div class="section-bar-item">
+              <div class="sb-header">
+                <span class="sb-name">
+                  <span class="sb-section-tag">${sec.tag}</span>
+                  ${sec.label}
+                </span>
+                <span class="sb-score">${sec.corr}/${sec.total} (${sec.secPct}%)</span>
+              </div>
+              <div class="sb-track">
+                <div class="sb-fill ${fillClass}" style="width:${sec.secPct}%"></div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- DIAGNÓSTICO -->
+    <div class="result-card">
+      <h3>🩺 Diagnóstico de desempeño</h3>
+      <div class="diag-box">${diagText}</div>
+    </div>
+
+    <!-- REVISIÓN PREGUNTA A PREGUNTA -->
+    <div class="result-card">
+      <h3>📝 Revisión detallada</h3>
+      <p style="font-size:.83rem;color:var(--col-muted);margin-bottom:14px;">
+        Haz clic en cada pregunta para ver la respuesta correcta y retroalimentación.
+      </p>
+      <div class="review-list">${reviewHTML}</div>
+    </div>
+
+    <!-- ESTADO GOOGLE SHEETS -->
+    <div id="sheetsStatus" class="sheets-status ${SHEETS_ENDPOINT ? 'loading' : 'hidden'}">
+      ${SHEETS_ENDPOINT ? '&#128196; Conectando con Google Sheets&hellip;' : ''}
+    </div>
+
+    <!-- EXPORTAR Y REINICIAR -->
+    <div class="export-row">
+      <button class="btn-export csv" onclick="exportCSV()">
+        &#128202; Descargar resultados (.csv)
+      </button>
+      <button class="btn-export print" onclick="printReport()">
+        &#128438; Imprimir / Guardar PDF
+      </button>
+    </div>
+    <button class="btn-restart" onclick="restartApp()">
+      &#128260; Realizar la prueba nuevamente
+    </button>
+  `;
+
+  // Renderizar matemáticas en los resultados
+  renderMath(document.getElementById('resultsContent'));
+
+  // Enviar resultado a Google Sheets (asíncrono, no bloquea la UI)
+  sendToSheets(record);
+}
+
+function toggleReview(i) {
+  const detail = document.getElementById(`detail-${i}`);
+  detail.classList.toggle('open');
+}
+
+/* =========================================================
+   PERSISTENCIA — localStorage
+   ========================================================= */
+const LS_KEY = 'saber11_ondas_historial';
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+  } catch(e) { return []; }
+}
+
+function saveResult(record) {
+  const history = loadHistory();
+  history.unshift(record);           // más reciente primero
+  if (history.length > 50) history.pop();  // máx. 50 registros
+  try { localStorage.setItem(LS_KEY, JSON.stringify(history)); } catch(e) {}
+}
+
+function clearHistory() {
+  if (!confirm('¿Borrar todo el historial de intentos?')) return;
+  try { localStorage.removeItem(LS_KEY); } catch(e) {}
+  renderHistory();
+}
+
+function levelClass(score) {
+  if (score === null || score === undefined) return 'sin-resp';
+  if (score >= 71) return 'avanzado';
+  if (score >= 51) return 'satisfactorio';
+  if (score >= 36) return 'minimo';
+  return 'insuficiente';
+}
+
+function renderHistory() {
+  const container = document.getElementById('historyList');
+  if (!container) return;
+  const history = loadHistory();
+  if (history.length === 0) {
+    container.innerHTML = '<div class="history-empty">&#128203; Aún no hay intentos registrados.</div>';
+    return;
+  }
+  container.innerHTML = `<div class="history-list">${
+    history.map(r => {
+      const cls  = levelClass(r.score);
+      const date = new Date(r.timestamp).toLocaleString('es-CO', {
+        dateStyle:'short', timeStyle:'short'
+      });
+      const testLabel = r.testName ? `<span style="font-size:.68rem;color:#7c3aed;font-weight:700;background:#f3e8ff;border-radius:10px;padding:1px 7px;">${r.testName.replace(' — Serie A','').replace(' — Serie B','')}</span>` : '';
+      return `
+        <div class="history-item">
+          <div>
+            <div class="hi-name">${escapeHtml(r.name)} ${testLabel}</div>
+            <div class="hi-date">${date} &nbsp;·&nbsp; ${r.time}</div>
+          </div>
+          <div class="hi-raw">${r.correct}/20</div>
+          <div class="hi-score ${cls}">${r.score}<small style="font-size:.65rem;font-weight:600"> pts</small></div>
+        </div>`;
+    }).join('')
+  }</div>`;
+}
+
+/* =========================================================
+   EXPORTAR CSV
+   ========================================================= */
+function exportCSV() {
+  const history = loadHistory();
+  if (history.length === 0) { alert('No hay datos guardados para exportar.'); return; }
+
+  const header = ['Fecha','Nombre','Código','Semestre','Prueba','Puntaje (0-100)',
+                  'Correctas','Incorrectas','Tiempo','Nivel',
+                  ...sectionMeta.map(s => `% ${s.tag}`)].join(',');
+
+  const rows = history.map(r => {
+    const secScores = (r.sectionScores || []).map(s => s.pct + '%');
+    return [
+      new Date(r.timestamp).toLocaleString('es-CO'),
+      `"${r.name}"`,
+      `"${r.code || ''}"`,
+      `"${r.semester || ''}"`,
+      `"${r.testName || 'Prueba 1'}"`,
+      r.score,
+      r.correct,
+      20 - r.correct,
+      `"${r.time}"`,
+      `"${r.level}"`,
+      ...secScores
+    ].join(',');
+  });
+
+  const csv  = [header, ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `resultados_ondas_cap16_${Date.now()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* =========================================================
+   IMPRIMIR / GUARDAR PDF
+   ========================================================= */
+function printReport() {
+  window.print();
+}
+
+/* =========================================================
+   REINICIAR
+   ========================================================= */
+function restartApp() {
+  if (state.timerID) clearInterval(state.timerID);
+  document.getElementById('timerChip').style.display = 'none';
+  renderHistory();
+  showScreen('screenWelcome');
+}
+
+/* =========================================================
+   ENVÍO A GOOGLE SHEETS
+   ========================================================= */
+async function sendToSheets(record) {
+  const el = document.getElementById('sheetsStatus');
+  if (!SHEETS_ENDPOINT) {
+    if (el) { el.className = 'sheets-status hidden'; }
+    return;
+  }
+  if (el) { el.className = 'sheets-status loading'; el.innerHTML = '&#128196; Registrando resultado en Google Sheets&hellip;'; }
+  try {
+    // mode: 'no-cors' es necesario para Apps Script; la petición sí llega aunque la respuesta sea opaca.
+    await fetch(SHEETS_ENDPOINT, {
+      method : 'POST',
+      mode   : 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body   : JSON.stringify(record)
+    });
+    if (el) { el.className = 'sheets-status'; el.innerHTML = '&#10003;&#65039; Resultado guardado en Google Sheets'; }
+  } catch(err) {
+    if (el) { el.className = 'sheets-status error'; el.innerHTML = '&#9888;&#65039; No se pudo conectar con Google Sheets. El resultado sigue guardado localmente.'; }
+    console.warn('Sheets send error:', err);
+  }
+}
+
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+function stripMath(html) {
+  return html.replace(/<[^>]+>/g,'').replace(/\$\$?[^$]*\$\$?/g,'[fórmula]');
+}
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderMath(container) {
+  function doRender() {
+    if (window.renderMathInElement) {
+      renderMathInElement(container, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true  },
+          { left: '$',  right: '$',  display: false }
+        ],
+        throwOnError: false
+      });
+    }
+  }
+  if (window.katexReady) { doRender(); }
+  else { setTimeout(doRender, 600); }
+}
+
+/* =========================================================
+   INICIALIZACIÓN
+   ========================================================= */
+// Inicialización
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('inputTeacher').value = 'Hayzar Hernández';
+  renderHistory();   // cargar historial guardado al abrir la página
+});
+</script>
+</body>
+</html>
