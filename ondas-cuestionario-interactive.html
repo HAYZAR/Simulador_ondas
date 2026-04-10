@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ondas Cuestionario</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh; padding: 20px; color: #333;
+}
+.container { max-width: 700px; margin: 0 auto; }
+.header { text-align: center; color: #fff; padding: 30px 20px; }
+.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+.header .meta { font-size: 14px; opacity: 0.9; }
+.progress-bar { background: rgba(255,255,255,0.3); border-radius: 10px; height: 8px; margin: 20px 0; overflow: hidden; }
+.progress-fill { background: #fff; height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
+.question { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.question.active { display: block; }
+.q-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: #888; }
+.q-number { font-weight: 600; color: #667eea; }
+.q-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 25px; color: #222; }
+.options { display: flex; flex-direction: column; gap: 12px; }
+.option-wrapper { display: flex; flex-direction: column; }
+.option {
+  display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
+  border: 2px solid #e8e8e8; border-radius: 12px; background: #fafafa;
+  cursor: pointer; transition: all 0.2s; text-align: left; font-size: 15px; width: 100%;
+}
+[dir="rtl"] .option { text-align: right; flex-direction: row-reverse; }
+.option:hover:not(.disabled) { border-color: #667eea; background: #f5f3ff; }
+.option.selected { border-color: #667eea; background: #ede9fe; }
+.option.correct { border-color: #22c55e; background: #dcfce7; }
+.option.incorrect { border-color: #ef4444; background: #fee2e2; }
+.option.disabled { cursor: default; }
+.option.show-correct { border-color: #22c55e; background: #dcfce7; }
+.opt-label {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%; background: #e8e8e8;
+  font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+.option.selected .opt-label { background: #667eea; color: #fff; }
+.option.correct .opt-label { background: #22c55e; color: #fff; }
+.option.incorrect .opt-label { background: #ef4444; color: #fff; }
+.option.show-correct .opt-label { background: #22c55e; color: #fff; }
+.opt-text { padding-top: 5px; line-height: 1.5; }
+
+/* Individual option feedback */
+.option-feedback {
+  margin: 8px 0 4px 46px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+[dir="rtl"] .option-feedback { margin-left: 0; margin-right: 46px; }
+.option-feedback.correct-feedback {
+  background: #dcfce7;
+  border-left: 3px solid #22c55e;
+}
+.option-feedback.incorrect-feedback {
+  background: #fef3f2;
+  border-left: 3px solid #fca5a5;
+}
+[dir="rtl"] .option-feedback.correct-feedback,
+[dir="rtl"] .option-feedback.incorrect-feedback {
+  border-left: none;
+  border-right: 3px solid;
+}
+[dir="rtl"] .option-feedback.correct-feedback { border-right-color: #22c55e; }
+[dir="rtl"] .option-feedback.incorrect-feedback { border-right-color: #fca5a5; }
+.feedback-status {
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.feedback-status.correct { color: #166534; }
+.feedback-status.incorrect { color: #991b1b; }
+.feedback-rationale { color: #444; }
+
+/* Hint box */
+.hint-box {
+  margin: 12px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+}
+.hint-toggle {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hint-toggle:hover { background: #fef3c7; }
+.hint-content {
+  padding: 0 16px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s, padding 0.3s;
+  font-size: 14px;
+  color: #78350f;
+  line-height: 1.5;
+}
+.hint-box.show .hint-content {
+  padding: 0 16px 12px;
+  max-height: 200px;
+}
+
+.next-btn {
+  margin-top: 20px; width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none;
+  border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+.hidden { display: none !important; }
+.results { background: #fff; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.results.active { display: block; }
+.results h2 { font-size: 28px; margin-bottom: 10px; color: #333; }
+.results .score { font-size: 64px; font-weight: 700; color: #667eea; margin: 20px 0; }
+.results .score-text { font-size: 18px; color: #666; margin-bottom: 30px; }
+.restart-btn {
+  padding: 14px 40px; background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+
+/* Math CSS */
+.math, .math-block { font-family: "Cambria Math", "Times New Roman", Times, serif; font-style: italic; }
+.math-block { display: block; text-align: center; margin: 10px 0; font-size: 110%; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 3px; font-size: 0.9em; }
+.frac-num { border-bottom: 1px solid currentColor; padding: 0 4px 2px; line-height: 1.2; }
+.frac-den { padding: 2px 4px 0; line-height: 1.2; }
+.sqrt { white-space: nowrap; }
+.sqrt-content { border-top: 1px solid currentColor; padding: 0 3px; margin-left: 2px; }
+sup, sub { font-size: 0.75em; }
+sup { vertical-align: super; }
+sub { vertical-align: sub; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Ondas Cuestionario</h1>
+    <div class="meta">10 preguntas</div>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+  <div id="quiz-container">
+        <div class="question" data-index="0">
+          <div class="q-header">
+            <span class="q-number">Pregunta 1</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">¿Cuál es la característica principal que define a las ondas mecánicas, como las ondas sonoras o las ondas en el agua, según el texto?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considera qué necesitan estas ondas para desplazarse y qué leyes físicas gobiernan su movimiento.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La velocidad de las ondas mecánicas depende de las propiedades elásticas e inerciales del medio, no es constante como la de la luz en el vacío.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Viajan siempre a la velocidad de la luz, independientemente del medio.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La velocidad de las ondas mecánicas depende de las propiedades elásticas e inerciales del medio, no es constante como la de la luz en el vacío.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Esa descripción corresponde a las ondas de materia, que son un tipo distinto de onda mencionado en el texto.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Están asociadas únicamente a partículas fundamentales como electrones y protones.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esa descripción corresponde a las ondas de materia, que son un tipo distinto de onda mencionado en el texto.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Las ondas mecánicas se definen por su dependencia de un medio elástico y su cumplimiento de la mecánica clásica de Newton.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Se rigen por las leyes de Newton y requieren un medio material para existir.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Las ondas mecánicas se definen por su dependencia de un medio elástico y su cumplimiento de la mecánica clásica de Newton.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Esta es una característica de las ondas electromagnéticas; las mecánicas requieren materia para propagarse.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Pueden viajar a través del vacío del espacio sin necesidad de un medio.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta es una característica de las ondas electromagnéticas; las mecánicas requieren materia para propagarse.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="1">
+          <div class="q-header">
+            <span class="q-number">Pregunta 2</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">En una onda longitudinal que se propaga por un tubo con aire, ¿cómo se mueven los elementos del medio (aire) respecto a la dirección de la onda?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piensa en el ejemplo del pistón que empuja y jala el aire dentro de un tubo.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="En las ondas longitudinales, el movimiento de las partículas coincide con el eje de desplazamiento de la onda.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Oscilan de forma paralela a la dirección de propagación de la onda.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">En las ondas longitudinales, el movimiento de las partículas coincide con el eje de desplazamiento de la onda.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Aunque existen ondas complejas con movimientos circulares, las ondas puramente longitudinales se limitan a un movimiento de vaivén en la misma dirección de la onda.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Se mueven en círculos perfectos alrededor de su posición de equilibrio.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque existen ondas complejas con movimientos circulares, las ondas puramente longitudinales se limitan a un movimiento de vaivén en la misma dirección de la onda.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Ese comportamiento define a las ondas transversales, no a las longitudinales.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Oscilan de forma perpendicular a la dirección de propagación.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Ese comportamiento define a las ondas transversales, no a las longitudinales.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Los elementos del medio deben oscilar para que la onda mecánica se propague, aunque no se desplacen con ella a larga distancia.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Permanecen estáticos mientras la energía fluye a su alrededor.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los elementos del medio deben oscilar para que la onda mecánica se propague, aunque no se desplacen con ella a larga distancia.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="2">
+          <div class="q-header">
+            <span class="q-number">Pregunta 3</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Si una cuerda tiene una densidad lineal <span class="math">μ</span> y está bajo una tensión <span class="math">τ</span>, ¿qué sucede con la velocidad de la onda <span class="math">v</span> si la tensión se incrementa al cuádruple (<span class="math">4τ</span>)?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Recuerda la relación matemática entre la tensión y la velocidad en una cuerda estirada.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La relación no es lineal, sino que involucra una raíz cuadrada según la fórmula $v = \sqrt{\tau / \mu}$.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">La velocidad aumenta al cuádruple.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La relación no es lineal, sino que involucra una raíz cuadrada según la fórmula <span class="math">v = <span class="sqrt">√<span class="sqrt-content">τ / μ</span></span></span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Un aumento en la tensión siempre resulta en un aumento de la velocidad de propagación en la cuerda.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">La velocidad se reduce a la mitad.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Un aumento en la tensión siempre resulta en un aumento de la velocidad de propagación en la cuerda.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="La velocidad de una onda en una cuerda está determinada por las propiedades del medio (tensión y densidad), no por la frecuencia de la fuente.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La velocidad permanece igual porque solo depende de la frecuencia.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La velocidad de una onda en una cuerda está determinada por las propiedades del medio (tensión y densidad), no por la frecuencia de la fuente.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Como $v$ es proporcional a $\sqrt{\tau}$, al tener $\sqrt{4\tau}$, la velocidad resultante es $2v$.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">La velocidad se duplica.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Como <span class="math">v</span> es proporcional a <span class="math"><span class="sqrt">√<span class="sqrt-content">τ</span></span></span>, al tener <span class="math"><span class="sqrt">√<span class="sqrt-content">4τ</span></span></span>, la velocidad resultante es <span class="math">2v</span>.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="3">
+          <div class="q-header">
+            <span class="q-number">Pregunta 4</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Dada la ecuación de una onda sinusoidal <span class="math">y(x, t) = y<sub>m</sub> sin(kx + ω t)</span>, ¿hacia qué dirección se desplaza la onda?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Observa el signo que conecta los términos de posición (<span class="math">x</span>) y tiempo (<span class="math">t</span>) dentro del argumento del seno.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="El signo positivo en el argumento del seno indica que a medida que el tiempo $t$ aumenta, $x$ debe disminuir para mantener la fase constante.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">En la dirección negativa del eje <span class="math">x</span>.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El signo positivo en el argumento del seno indica que a medida que el tiempo <span class="math">t</span> aumenta, <span class="math">x</span> debe disminuir para mantener la fase constante.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="El eje $y$ representa el desplazamiento transversal de los elementos, no la dirección de propagación de la onda.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">En la dirección positiva del eje <span class="math">y</span>.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El eje <span class="math">y</span> representa el desplazamiento transversal de los elementos, no la dirección de propagación de la onda.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Para una onda que viaja en la dirección positiva, el signo entre los términos de posición y tiempo debe ser negativo.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">En la dirección positiva del eje <span class="math">x</span>.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Para una onda que viaja en la dirección positiva, el signo entre los términos de posición y tiempo debe ser negativo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Esta es la forma funcional de una onda viajera; las ondas estacionarias tienen una forma matemática distinta.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">La onda es estacionaria y no se desplaza en ninguna dirección.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta es la forma funcional de una onda viajera; las ondas estacionarias tienen una forma matemática distinta.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="4">
+          <div class="q-header">
+            <span class="q-number">Pregunta 5</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">¿Cuál es la relación correcta entre el número de onda angular <span class="math">k</span> y la longitud de onda <span class="math">λ</span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piensa en cuántos radianes recorre una fase completa en una distancia igual a una longitud de onda.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Esta fórmula invierte la relación correcta entre la longitud de onda y el ciclo radial.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">k = <span class="frac"><span class="frac-num">λ</span><span class="frac-den">2π</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta fórmula invierte la relación correcta entre la longitud de onda y el ciclo radial.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Aunque $k$ es inversamente proporcional a $\lambda$, falta el factor de conversión radial de $2\pi$ para obtener el número de onda angular.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">k = <span class="frac"><span class="frac-num">1</span><span class="frac-den">λ</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque <span class="math">k</span> es inversamente proporcional a <span class="math">λ</span>, falta el factor de conversión radial de <span class="math">2π</span> para obtener el número de onda angular.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Por definición, el número de onda angular representa cuántos radianes hay por unidad de longitud, relacionándose con el ciclo completo de $2\pi$.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">k = <span class="frac"><span class="frac-num">2π</span><span class="frac-den">λ</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Por definición, el número de onda angular representa cuántos radianes hay por unidad de longitud, relacionándose con el ciclo completo de <span class="math">2π</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Esta relación implicaría que $k$ aumenta con la longitud de onda, cuando en realidad son inversamente proporcionales.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">k = 2π λ</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta relación implicaría que <span class="math">k</span> aumenta con la longitud de onda, cuando en realidad son inversamente proporcionales.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="5">
+          <div class="q-header">
+            <span class="q-number">Pregunta 6</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Al analizar la potencia promedio <span class="math">P<sub>avg</sub></span> transportada por una onda sinusoidal en una cuerda, ¿cómo afecta el cambio de la amplitud <span class="math">y<sub>m</sub></span> a dicha potencia?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Revisa la dependencia de la fórmula de la potencia promedio respecto a los parámetros de la onda.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La relación no es lineal; la energía de una onda mecánica escala de forma más agresiva con la amplitud.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">La potencia es proporcional a la amplitud (<span class="math">y<sub>m</sub></span>).</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La relación no es lineal; la energía de una onda mecánica escala de forma más agresiva con la amplitud.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La amplitud determina cuánta energía se invierte en desplazar el medio, por lo que afecta directamente la potencia.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">La potencia es independiente de la amplitud.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La amplitud determina cuánta energía se invierte en desplazar el medio, por lo que afecta directamente la potencia.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Tanto la energía cinética como la potencial dependen del cuadrado del desplazamiento y la velocidad, resultando en una dependencia cuadrática de la potencia.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La potencia es proporcional al cuadrado de la amplitud (<span class="math">y<sub>m</sub><sup>2</sup></span>).</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Tanto la energía cinética como la potencial dependen del cuadrado del desplazamiento y la velocidad, resultando en una dependencia cuadrática de la potencia.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Esta relación no concuerda con las leyes de la física para sistemas oscilatorios donde la energía depende de la amplitud al cuadrado.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">La potencia es proporcional a la raíz cuadrada de la amplitud (<span class="math"><span class="sqrt">√<span class="sqrt-content">y<sub>m</sub></span></span></span>).</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta relación no concuerda con las leyes de la física para sistemas oscilatorios donde la energía depende de la amplitud al cuadrado.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="6">
+          <div class="q-header">
+            <span class="q-number">Pregunta 7</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">En el contexto de una onda transversal en una cuerda, ¿cuál es la diferencia fundamental entre la velocidad de la onda <span class="math">v</span> y la velocidad transversal <span class="math">u</span> de un elemento de la cuerda?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considera qué se mueve a lo largo del eje <span class="math">x</span> y qué se mueve a lo largo del eje <span class="math">y</span>.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="La velocidad de onda es constante para un medio dado, mientras que la velocidad transversal varía según el movimiento armónico simple de cada partícula.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">v</span> es la rapidez con la que la forma de la onda viaja por la cuerda, mientras que <span class="math">u</span> es la rapidez del movimiento vertical de las partículas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La velocidad de onda es constante para un medio dado, mientras que la velocidad transversal varía según el movimiento armónico simple de cada partícula.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La velocidad de la onda $v$ es la que depende de la tensión, mientras que la velocidad transversal $u$ está ligada a la amplitud y frecuencia angular.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">v</span> depende de la frecuencia, mientras que <span class="math">u</span> depende de la tensión de la cuerda.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La velocidad de la onda <span class="math">v</span> es la que depende de la tensión, mientras que la velocidad transversal <span class="math">u</span> está ligada a la amplitud y frecuencia angular.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Son conceptos distintos: uno describe el avance de la perturbación y el otro el movimiento del material.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">No hay diferencia; ambas representan lo mismo.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Son conceptos distintos: uno describe el avance de la perturbación y el otro el movimiento del material.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Es al revés: la velocidad de la onda suele ser constante en medios uniformes, y la velocidad de los elementos varía sinusoidalmente.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">v</span> cambia constantemente en el tiempo, mientras que <span class="math">u</span> es constante para toda la cuerda.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es al revés: la velocidad de la onda suele ser constante en medios uniformes, y la velocidad de los elementos varía sinusoidalmente.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="7">
+          <div class="q-header">
+            <span class="q-number">Pregunta 8</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Según el texto, ¿dónde se localiza la máxima energía (cinética y potencial) en un elemento de una cuerda por la que viaja una onda sinusoidal?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piensa en qué posición un elemento de cuerda tiene su mayor rapidez y su mayor estiramiento.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Esa ubicación correspondería a un antinodo, pero el texto especifica que para ondas viajeras, la energía se concentra donde el desplazamiento es nulo.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">A una distancia de <span class="math"><span class="frac"><span class="frac-num">λ</span><span class="frac-den">4</span></span></span> de cualquier nodo.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esa ubicación correspondería a un antinodo, pero el texto especifica que para ondas viajeras, la energía se concentra donde el desplazamiento es nulo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="En $y=0$, la velocidad transversal es máxima (máxima energía cinética) y la pendiente de la cuerda es máxima (máximo estiramiento y energía potencial).">
+            <span class="opt-label">B</span>
+            <span class="opt-text">En los puntos donde el desplazamiento es cero (<span class="math">y = 0</span>).</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">En <span class="math">y=0</span>, la velocidad transversal es máxima (máxima energía cinética) y la pendiente de la cuerda es máxima (máximo estiramiento y energía potencial).</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="En los picos, la velocidad transversal es cero y la cuerda no tiene estiramiento adicional respecto a sus vecinos inmediatos en ese instante.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">En los puntos de desplazamiento máximo (picos y valles).</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">En los picos, la velocidad transversal es cero y la cuerda no tiene estiramiento adicional respecto a sus vecinos inmediatos en ese instante.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La energía varía periódicamente a lo largo de la onda, concentrándose en las regiones con mayor rapidez de cambio de desplazamiento.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">La energía se distribuye uniformemente en toda la longitud de la cuerda.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La energía varía periódicamente a lo largo de la onda, concentrándose en las regiones con mayor rapidez de cambio de desplazamiento.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="8">
+          <div class="q-header">
+            <span class="q-number">Pregunta 9</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">¿Cuál es el valor de la rapidez de una onda viajera si se conoce que recorre una distancia de una longitud de onda <span class="math">λ</span> en un intervalo de tiempo igual a un periodo <span class="math">T</span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Aplica la definición básica de velocidad (distancia dividida por tiempo) a un ciclo completo de la onda.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Esta fórmula resultaría en unidades de longitud-tiempo, no de velocidad (longitud/tiempo).">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">v = λ T</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta fórmula resultaría en unidades de longitud-tiempo, no de velocidad (longitud/tiempo).</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Esta es la inversa de la velocidad, conocida a veces como lentitud.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">v = <span class="frac"><span class="frac-num">T</span><span class="frac-den">λ</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta es la inversa de la velocidad, conocida a veces como lentitud.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Esta expresión no es dimensionalmente correcta para una velocidad de propagación lineal.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">v = <span class="frac"><span class="frac-num">ω</span><span class="frac-den">T</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta expresión no es dimensionalmente correcta para una velocidad de propagación lineal.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="La velocidad se define como distancia sobre tiempo; en un ciclo, la distancia es $\lambda$ y el tiempo es $T$.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">v = <span class="frac"><span class="frac-num">λ</span><span class="frac-den">T</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La velocidad se define como distancia sobre tiempo; en un ciclo, la distancia es <span class="math">λ</span> y el tiempo es <span class="math">T</span>.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="9">
+          <div class="q-header">
+            <span class="q-number">Pregunta 10</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Si se desea calcular la masa de un segmento de cuerda de longitud <span class="math">Δ l</span> sabiendo que la cuerda tiene una densidad lineal <span class="math">μ</span>, ¿cuál es la expresión correcta?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Recuerda la definición de densidad lineal como la razón entre masa y longitud.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="La densidad lineal es masa por unidad de longitud, por lo que al multiplicar por una longitud se obtiene la masa.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">Δ m = μ Δ l</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La densidad lineal es masa por unidad de longitud, por lo que al multiplicar por una longitud se obtiene la masa.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Esto no produciría una unidad de masa en el análisis dimensional.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">Δ m = <span class="frac"><span class="frac-num">Δ l</span><span class="frac-den">μ</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esto no produciría una unidad de masa en el análisis dimensional.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Esto daría unidades de masa por unidad de longitud cuadrada, lo cual es incorrecto.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">Δ m = <span class="frac"><span class="frac-num">μ</span><span class="frac-den">Δ l</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esto daría unidades de masa por unidad de longitud cuadrada, lo cual es incorrecto.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="No existe una justificación física para aplicar una raíz cuadrada en el cálculo de la masa a partir de la densidad lineal.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">Δ m = <span class="sqrt">√<span class="sqrt-content">μ Δ l</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">No existe una justificación física para aplicar una raíz cuadrada en el cálculo de la masa a partir de la densidad lineal.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      </div>
+  <div class="results" id="results">
+    <h2>¡Cuestionario completado!</h2>
+    <div class="score" id="score">0%</div>
+    <div class="score-text" id="score-text"></div>
+    <button class="restart-btn" onclick="restart()">Intentar de nuevo</button>
+  </div>
+</div>
+<script>
+const quizData = [{"question":"¿Cuál es la característica principal que define a las ondas mecánicas, como las ondas sonoras o las ondas en el agua, según el texto?","hint":"Considera qué necesitan estas ondas para desplazarse y qué leyes físicas gobiernan su movimiento.","options":[{"label":"A","text":"Viajan siempre a la velocidad de la luz, independientemente del medio.","isCorrect":false,"rationale":"La velocidad de las ondas mecánicas depende de las propiedades elásticas e inerciales del medio, no es constante como la de la luz en el vacío."},{"label":"B","text":"Están asociadas únicamente a partículas fundamentales como electrones y protones.","isCorrect":false,"rationale":"Esa descripción corresponde a las ondas de materia, que son un tipo distinto de onda mencionado en el texto."},{"label":"C","text":"Se rigen por las leyes de Newton y requieren un medio material para existir.","isCorrect":true,"rationale":"Las ondas mecánicas se definen por su dependencia de un medio elástico y su cumplimiento de la mecánica clásica de Newton."},{"label":"D","text":"Pueden viajar a través del vacío del espacio sin necesidad de un medio.","isCorrect":false,"rationale":"Esta es una característica de las ondas electromagnéticas; las mecánicas requieren materia para propagarse."}]},{"question":"En una onda longitudinal que se propaga por un tubo con aire, ¿cómo se mueven los elementos del medio (aire) respecto a la dirección de la onda?","hint":"Piensa en el ejemplo del pistón que empuja y jala el aire dentro de un tubo.","options":[{"label":"A","text":"Oscilan de forma paralela a la dirección de propagación de la onda.","isCorrect":true,"rationale":"En las ondas longitudinales, el movimiento de las partículas coincide con el eje de desplazamiento de la onda."},{"label":"B","text":"Se mueven en círculos perfectos alrededor de su posición de equilibrio.","isCorrect":false,"rationale":"Aunque existen ondas complejas con movimientos circulares, las ondas puramente longitudinales se limitan a un movimiento de vaivén en la misma dirección de la onda."},{"label":"C","text":"Oscilan de forma perpendicular a la dirección de propagación.","isCorrect":false,"rationale":"Ese comportamiento define a las ondas transversales, no a las longitudinales."},{"label":"D","text":"Permanecen estáticos mientras la energía fluye a su alrededor.","isCorrect":false,"rationale":"Los elementos del medio deben oscilar para que la onda mecánica se propague, aunque no se desplacen con ella a larga distancia."}]},{"question":"Si una cuerda tiene una densidad lineal $\\mu$ y está bajo una tensión $\\tau$, ¿qué sucede con la velocidad de la onda $v$ si la tensión se incrementa al cuádruple ($4\\tau$)?","hint":"Recuerda la relación matemática entre la tensión y la velocidad en una cuerda estirada.","options":[{"label":"A","text":"La velocidad aumenta al cuádruple.","isCorrect":false,"rationale":"La relación no es lineal, sino que involucra una raíz cuadrada según la fórmula $v = \\sqrt{\\tau / \\mu}$."},{"label":"B","text":"La velocidad se reduce a la mitad.","isCorrect":false,"rationale":"Un aumento en la tensión siempre resulta en un aumento de la velocidad de propagación en la cuerda."},{"label":"C","text":"La velocidad permanece igual porque solo depende de la frecuencia.","isCorrect":false,"rationale":"La velocidad de una onda en una cuerda está determinada por las propiedades del medio (tensión y densidad), no por la frecuencia de la fuente."},{"label":"D","text":"La velocidad se duplica.","isCorrect":true,"rationale":"Como $v$ es proporcional a $\\sqrt{\\tau}$, al tener $\\sqrt{4\\tau}$, la velocidad resultante es $2v$."}]},{"question":"Dada la ecuación de una onda sinusoidal $y(x, t) = y_m \\sin(kx + \\omega t)$, ¿hacia qué dirección se desplaza la onda?","hint":"Observa el signo que conecta los términos de posición ($x$) y tiempo ($t$) dentro del argumento del seno.","options":[{"label":"A","text":"En la dirección negativa del eje $x$.","isCorrect":true,"rationale":"El signo positivo en el argumento del seno indica que a medida que el tiempo $t$ aumenta, $x$ debe disminuir para mantener la fase constante."},{"label":"B","text":"En la dirección positiva del eje $y$.","isCorrect":false,"rationale":"El eje $y$ representa el desplazamiento transversal de los elementos, no la dirección de propagación de la onda."},{"label":"C","text":"En la dirección positiva del eje $x$.","isCorrect":false,"rationale":"Para una onda que viaja en la dirección positiva, el signo entre los términos de posición y tiempo debe ser negativo."},{"label":"D","text":"La onda es estacionaria y no se desplaza en ninguna dirección.","isCorrect":false,"rationale":"Esta es la forma funcional de una onda viajera; las ondas estacionarias tienen una forma matemática distinta."}]},{"question":"¿Cuál es la relación correcta entre el número de onda angular $k$ y la longitud de onda $\\lambda$?","hint":"Piensa en cuántos radianes recorre una fase completa en una distancia igual a una longitud de onda.","options":[{"label":"A","text":"$k = \\frac{\\lambda}{2\\pi}$","isCorrect":false,"rationale":"Esta fórmula invierte la relación correcta entre la longitud de onda y el ciclo radial."},{"label":"B","text":"$k = \\frac{1}{\\lambda}$","isCorrect":false,"rationale":"Aunque $k$ es inversamente proporcional a $\\lambda$, falta el factor de conversión radial de $2\\pi$ para obtener el número de onda angular."},{"label":"C","text":"$k = \\frac{2\\pi}{\\lambda}$","isCorrect":true,"rationale":"Por definición, el número de onda angular representa cuántos radianes hay por unidad de longitud, relacionándose con el ciclo completo de $2\\pi$."},{"label":"D","text":"$k = 2\\pi \\lambda$","isCorrect":false,"rationale":"Esta relación implicaría que $k$ aumenta con la longitud de onda, cuando en realidad son inversamente proporcionales."}]},{"question":"Al analizar la potencia promedio $P_{avg}$ transportada por una onda sinusoidal en una cuerda, ¿cómo afecta el cambio de la amplitud $y_m$ a dicha potencia?","hint":"Revisa la dependencia de la fórmula de la potencia promedio respecto a los parámetros de la onda.","options":[{"label":"A","text":"La potencia es proporcional a la amplitud ($y_m$).","isCorrect":false,"rationale":"La relación no es lineal; la energía de una onda mecánica escala de forma más agresiva con la amplitud."},{"label":"B","text":"La potencia es independiente de la amplitud.","isCorrect":false,"rationale":"La amplitud determina cuánta energía se invierte en desplazar el medio, por lo que afecta directamente la potencia."},{"label":"C","text":"La potencia es proporcional al cuadrado de la amplitud ($y_m^2$).","isCorrect":true,"rationale":"Tanto la energía cinética como la potencial dependen del cuadrado del desplazamiento y la velocidad, resultando en una dependencia cuadrática de la potencia."},{"label":"D","text":"La potencia es proporcional a la raíz cuadrada de la amplitud ($\\sqrt{y_m}$).","isCorrect":false,"rationale":"Esta relación no concuerda con las leyes de la física para sistemas oscilatorios donde la energía depende de la amplitud al cuadrado."}]},{"question":"En el contexto de una onda transversal en una cuerda, ¿cuál es la diferencia fundamental entre la velocidad de la onda $v$ y la velocidad transversal $u$ de un elemento de la cuerda?","hint":"Considera qué se mueve a lo largo del eje $x$ y qué se mueve a lo largo del eje $y$.","options":[{"label":"A","text":"$v$ es la rapidez con la que la forma de la onda viaja por la cuerda, mientras que $u$ es la rapidez del movimiento vertical de las partículas.","isCorrect":true,"rationale":"La velocidad de onda es constante para un medio dado, mientras que la velocidad transversal varía según el movimiento armónico simple de cada partícula."},{"label":"B","text":"$v$ depende de la frecuencia, mientras que $u$ depende de la tensión de la cuerda.","isCorrect":false,"rationale":"La velocidad de la onda $v$ es la que depende de la tensión, mientras que la velocidad transversal $u$ está ligada a la amplitud y frecuencia angular."},{"label":"C","text":"No hay diferencia; ambas representan lo mismo.","isCorrect":false,"rationale":"Son conceptos distintos: uno describe el avance de la perturbación y el otro el movimiento del material."},{"label":"D","text":"$v$ cambia constantemente en el tiempo, mientras que $u$ es constante para toda la cuerda.","isCorrect":false,"rationale":"Es al revés: la velocidad de la onda suele ser constante en medios uniformes, y la velocidad de los elementos varía sinusoidalmente."}]},{"question":"Según el texto, ¿dónde se localiza la máxima energía (cinética y potencial) en un elemento de una cuerda por la que viaja una onda sinusoidal?","hint":"Piensa en qué posición un elemento de cuerda tiene su mayor rapidez y su mayor estiramiento.","options":[{"label":"A","text":"A una distancia de $\\frac{\\lambda}{4}$ de cualquier nodo.","isCorrect":false,"rationale":"Esa ubicación correspondería a un antinodo, pero el texto especifica que para ondas viajeras, la energía se concentra donde el desplazamiento es nulo."},{"label":"B","text":"En los puntos donde el desplazamiento es cero ($y = 0$).","isCorrect":true,"rationale":"En $y=0$, la velocidad transversal es máxima (máxima energía cinética) y la pendiente de la cuerda es máxima (máximo estiramiento y energía potencial)."},{"label":"C","text":"En los puntos de desplazamiento máximo (picos y valles).","isCorrect":false,"rationale":"En los picos, la velocidad transversal es cero y la cuerda no tiene estiramiento adicional respecto a sus vecinos inmediatos en ese instante."},{"label":"D","text":"La energía se distribuye uniformemente en toda la longitud de la cuerda.","isCorrect":false,"rationale":"La energía varía periódicamente a lo largo de la onda, concentrándose en las regiones con mayor rapidez de cambio de desplazamiento."}]},{"question":"¿Cuál es el valor de la rapidez de una onda viajera si se conoce que recorre una distancia de una longitud de onda $\\lambda$ en un intervalo de tiempo igual a un periodo $T$?","hint":"Aplica la definición básica de velocidad (distancia dividida por tiempo) a un ciclo completo de la onda.","options":[{"label":"A","text":"$v = \\lambda T$","isCorrect":false,"rationale":"Esta fórmula resultaría en unidades de longitud-tiempo, no de velocidad (longitud/tiempo)."},{"label":"B","text":"$v = \\frac{T}{\\lambda}$","isCorrect":false,"rationale":"Esta es la inversa de la velocidad, conocida a veces como lentitud."},{"label":"C","text":"$v = \\frac{\\omega}{T}$","isCorrect":false,"rationale":"Esta expresión no es dimensionalmente correcta para una velocidad de propagación lineal."},{"label":"D","text":"$v = \\frac{\\lambda}{T}$","isCorrect":true,"rationale":"La velocidad se define como distancia sobre tiempo; en un ciclo, la distancia es $\\lambda$ y el tiempo es $T$."}]},{"question":"Si se desea calcular la masa de un segmento de cuerda de longitud $\\Delta l$ sabiendo que la cuerda tiene una densidad lineal $\\mu$, ¿cuál es la expresión correcta?","hint":"Recuerda la definición de densidad lineal como la razón entre masa y longitud.","options":[{"label":"A","text":"$\\Delta m = \\mu \\Delta l$","isCorrect":true,"rationale":"La densidad lineal es masa por unidad de longitud, por lo que al multiplicar por una longitud se obtiene la masa."},{"label":"B","text":"$\\Delta m = \\frac{\\Delta l}{\\mu}$","isCorrect":false,"rationale":"Esto no produciría una unidad de masa en el análisis dimensional."},{"label":"C","text":"$\\Delta m = \\frac{\\mu}{\\Delta l}$","isCorrect":false,"rationale":"Esto daría unidades de masa por unidad de longitud cuadrada, lo cual es incorrecto."},{"label":"D","text":"$\\Delta m = \\sqrt{\\mu \\Delta l}$","isCorrect":false,"rationale":"No existe una justificación física para aplicar una raíz cuadrada en el cálculo de la masa a partir de la densidad lineal."}]}];
+const tr = {"correct":"¡Correcto!","incorrect":"Incorrecto","next":"Siguiente pregunta →","seeResults":"Ver resultados","complete":"¡Cuestionario completado!","scoreText":"Obtuviste {correct} de {total} correctas","tryAgain":"Intentar de nuevo","rightAnswer":"Respuesta correcta","notQuite":"No del todo"};
+let currentQ = 0, correctCount = 0, answered = false;
+
+function init() {
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === 0));
+  updateProgress();
+  document.querySelectorAll('.option').forEach(opt => opt.addEventListener('click', () => selectOption(opt)));
+  document.querySelectorAll('.next-btn').forEach(btn => btn.addEventListener('click', nextQuestion));
+}
+
+function selectOption(opt) {
+  if (answered) return;
+  answered = true;
+  const q = opt.closest('.question');
+  const options = q.querySelectorAll('.option');
+  const nextBtn = q.querySelector('.next-btn');
+  const isCorrect = opt.dataset.correct === 'true';
+  
+  // Mark all options as disabled
+  options.forEach(o => o.classList.add('disabled'));
+  
+  // Style selected option
+  opt.classList.add('selected', isCorrect ? 'correct' : 'incorrect');
+  
+  // Show correct answer if wrong
+  if (!isCorrect) {
+    const correctOpt = [...options].find(o => o.dataset.correct === 'true');
+    if (correctOpt) correctOpt.classList.add('show-correct');
+  }
+  
+  if (isCorrect) correctCount++;
+  
+  // Show feedback for ALL options that have rationale
+  options.forEach(o => {
+    const wrapper = o.closest('.option-wrapper');
+    const feedback = wrapper.querySelector('.option-feedback');
+    const rationale = o.dataset.rationale;
+    const isThisCorrect = o.dataset.correct === 'true';
+    
+    if (rationale && rationale.trim()) {
+      feedback.classList.remove('hidden');
+      feedback.classList.add(isThisCorrect ? 'correct-feedback' : 'incorrect-feedback');
+      
+      const statusEl = feedback.querySelector('.feedback-status');
+      statusEl.className = 'feedback-status ' + (isThisCorrect ? 'correct' : 'incorrect');
+      statusEl.innerHTML = isThisCorrect 
+        ? '✓ ' + tr.rightAnswer
+        : '✗ ' + tr.notQuite;
+    }
+  });
+  
+  nextBtn.classList.remove('hidden');
+  if (currentQ === quizData.length - 1) nextBtn.textContent = tr.seeResults;
+}
+
+function nextQuestion() {
+  answered = false;
+  currentQ++;
+  if (currentQ >= quizData.length) { showResults(); return; }
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === currentQ));
+  updateProgress();
+}
+
+function updateProgress() {
+  document.querySelector('.progress-fill').style.width = (currentQ / quizData.length * 100) + '%';
+}
+
+function showResults() {
+  document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+  document.getElementById('results').classList.add('active');
+  const pct = Math.round((correctCount / quizData.length) * 100);
+  document.getElementById('score').textContent = pct + '%';
+  document.getElementById('score-text').textContent = tr.scoreText.replace('{correct}', correctCount).replace('{total}', quizData.length);
+  document.querySelector('.progress-fill').style.width = '100%';
+}
+
+function restart() {
+  currentQ = 0; correctCount = 0; answered = false;
+  document.getElementById('results').classList.remove('active');
+  document.querySelectorAll('.question').forEach((q, i) => {
+    q.classList.toggle('active', i === 0);
+    q.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'incorrect', 'disabled', 'show-correct'));
+    q.querySelectorAll('.option-feedback').forEach(f => {
+      f.classList.add('hidden');
+      f.classList.remove('correct-feedback', 'incorrect-feedback');
+    });
+    const btn = q.querySelector('.next-btn');
+    btn.classList.add('hidden');
+    btn.textContent = tr.next;
+  });
+  updateProgress();
+}
+
+init();
+</script>
+</body>
+</html>
