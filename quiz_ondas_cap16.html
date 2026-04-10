@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz · Ondas I — Capítulo 16</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f4f0;
+    --bg-tertiary: #eeecea;
+    --text-primary: #1a1a1a;
+    --text-secondary: #5a5956;
+    --border: rgba(0,0,0,0.12);
+    --border-md: rgba(0,0,0,0.22);
+    --purple-50: #EEEDFE;
+    --purple-400: #7F77DD;
+    --purple-600: #534AB7;
+    --purple-800: #3C3489;
+    --green-50: #EAF3DE;
+    --green-600: #639922;
+    --green-800: #27500A;
+    --red-50: #FCEBEB;
+    --red-600: #A32D2D;
+    --red-800: #791F1F;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1e1e1e;
+      --bg-secondary: #2a2a2a;
+      --bg-tertiary: #242424;
+      --text-primary: #f0eeeb;
+      --text-secondary: #a09e9b;
+      --border: rgba(255,255,255,0.12);
+      --border-md: rgba(255,255,255,0.22);
+      --purple-50: #26215C;
+      --purple-400: #AFA9EC;
+      --purple-600: #AFA9EC;
+      --purple-800: #CECBF6;
+      --green-50: #173404;
+      --green-600: #97C459;
+      --green-800: #C0DD97;
+      --red-50: #501313;
+      --red-600: #F09595;
+      --red-800: #F7C1C1;
+    }
+  }
+
+  html { font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+    line-height: 1.6;
+  }
+
+  .quiz-wrap { max-width: 720px; margin: 0 auto; }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 2rem; }
+  .header-badge {
+    display: inline-block;
+    background: var(--purple-50);
+    color: var(--purple-800);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 99px;
+    margin-bottom: 12px;
+    border: 0.5px solid var(--purple-400);
+  }
+  .header h1 { font-size: 26px; font-weight: 500; color: var(--text-primary); margin-bottom: 6px; }
+  .header p { font-size: 14px; color: var(--text-secondary); }
+
+  /* Progress */
+  .progress-wrap { margin-bottom: 1.5rem; }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .progress-bar-bg {
+    background: var(--bg-secondary);
+    border-radius: 99px;
+    height: 7px;
+    border: 0.5px solid var(--border);
+  }
+  .progress-bar {
+    height: 7px;
+    border-radius: 99px;
+    background: var(--purple-600);
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* Score pills */
+  .score-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 1.75rem; flex-wrap: wrap; }
+  .score-pill {
+    padding: 5px 16px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 0.5px solid var(--border);
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+  }
+  .score-pill.correct { background: var(--green-50); color: var(--green-800); border-color: var(--green-600); }
+  .score-pill.wrong   { background: var(--red-50);   color: var(--red-800);   border-color: var(--red-600);   }
+
+  /* Question card */
+  .q-card {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem 1.5rem;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.25s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .q-num {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--purple-600);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 10px;
+  }
+  .q-text { font-size: 16px; color: var(--text-primary); line-height: 1.7; margin-bottom: 1.25rem; }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 9px; }
+  .opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 13px 15px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    font-size: 15px;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    line-height: 1.55;
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+  }
+  .opt:hover:not(.disabled) { background: var(--bg-secondary); border-color: var(--border-md); }
+  .opt:focus-visible { outline: 2px solid var(--purple-600); outline-offset: 2px; }
+  .opt .letter {
+    font-weight: 500;
+    color: var(--purple-600);
+    min-width: 20px;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .opt.selected-correct { background: var(--green-50); border-color: var(--green-600); }
+  .opt.selected-correct .letter { color: var(--green-800); }
+  .opt.selected-wrong   { background: var(--red-50);   border-color: var(--red-600);   }
+  .opt.selected-wrong .letter   { color: var(--red-800);   }
+  .opt.show-correct     { background: var(--green-50); border-color: var(--green-600); }
+  .opt.show-correct .letter     { color: var(--green-800); }
+  .opt.disabled { cursor: default; }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 1rem;
+    padding: 13px 15px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.65;
+    display: none;
+    animation: fadeIn 0.2s ease;
+  }
+  .feedback.correct { display: block; background: var(--green-50); color: var(--green-800); border: 0.5px solid var(--green-600); }
+  .feedback.wrong   { display: block; background: var(--red-50);   color: var(--red-800);   border: 0.5px solid var(--red-600);   }
+  .feedback strong { font-weight: 500; }
+
+  /* Next button */
+  .btn-row { display: flex; justify-content: flex-end; margin-top: 1.25rem; }
+  .btn-next {
+    padding: 10px 26px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: var(--purple-600);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, transform 0.1s;
+    display: none;
+  }
+  .btn-next:hover { background: var(--purple-800); }
+  .btn-next:active { transform: scale(0.97); }
+
+  /* Result card */
+  .result-card {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+  .result-icon {
+    font-size: 48px;
+    margin-bottom: 1rem;
+    line-height: 1;
+  }
+  .result-score { font-size: 52px; font-weight: 500; color: var(--purple-600); margin-bottom: 4px; }
+  .result-pct   { font-size: 16px; color: var(--text-secondary); margin-bottom: 1.5rem; }
+  .result-stars { font-size: 24px; margin-bottom: 1.25rem; letter-spacing: 4px; }
+  .result-message {
+    font-size: 15px;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+    line-height: 1.7;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .result-breakdown {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  .breakdown-pill {
+    padding: 6px 18px;
+    border-radius: 99px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .breakdown-pill.c { background: var(--green-50); color: var(--green-800); border: 0.5px solid var(--green-600); }
+  .breakdown-pill.w { background: var(--red-50);   color: var(--red-800);   border: 0.5px solid var(--red-600);   }
+  .btn-restart {
+    padding: 11px 32px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--purple-600);
+    background: transparent;
+    color: var(--purple-600);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-restart:hover { background: var(--purple-50); }
+
+  /* Footer */
+  .footer { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: 2rem; opacity: 0.7; }
+
+  @media (max-width: 480px) {
+    body { padding: 1.25rem 0.75rem 3rem; }
+    .q-card { padding: 1.25rem 1rem; }
+    .header h1 { font-size: 22px; }
+    .result-score { font-size: 42px; }
+  }
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="header">
+    <div class="header-badge">Física · Halliday 9ª ed.</div>
+    <h1>Quiz: Ondas — I</h1>
+    <p>Secciones 16.1 – 16.7 &nbsp;·&nbsp; 10 preguntas &nbsp;·&nbsp; Nivel intermedio</p>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span id="prog-label">Pregunta 1 de 10</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="progress-bar-bg"><div class="progress-bar" id="pbar"></div></div>
+  </div>
+
+  <div class="score-row">
+    <span class="score-pill correct" id="pill-c">✓ 0 correctas</span>
+    <span class="score-pill wrong"   id="pill-w">✗ 0 incorrectas</span>
+    <span class="score-pill"         id="pill-r">10 restantes</span>
+  </div>
+
+  <div id="q-container"></div>
+
+  <div class="result-card" id="result-card">
+    <div class="result-icon" id="result-icon"></div>
+    <div class="result-score" id="result-score"></div>
+    <div class="result-pct"   id="result-pct"></div>
+    <div class="result-stars" id="result-stars"></div>
+    <div class="result-breakdown">
+      <span class="breakdown-pill c" id="bd-c"></span>
+      <span class="breakdown-pill w" id="bd-w"></span>
+    </div>
+    <p class="result-message" id="result-message"></p>
+    <button class="btn-restart" onclick="restart()">↺ Reiniciar quiz</button>
+  </div>
+
+  <p class="footer">Basado en Halliday, Resnick &amp; Walker · Fundamentals of Physics, 9ª edición</p>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "Una onda transversal en una cuerda se describe como aquella en la que las partículas del medio oscilan:",
+    opts: [
+      "En la misma dirección de propagación de la onda",
+      "Perpendicularmente a la dirección de propagación",
+      "En cualquier dirección con igual probabilidad",
+      "A lo largo de 45° respecto a la dirección de propagación"
+    ],
+    ans: 1,
+    fb_c: "Correcto. En las ondas transversales, como las de una cuerda, el desplazamiento de cada elemento es perpendicular a la dirección de viaje de la onda. En una onda longitudinal (como el sonido) las oscilaciones son paralelas a la dirección de propagación.",
+    fb_w: "Incorrecto. Las ondas transversales se caracterizan porque el desplazamiento de las partículas es perpendicular a la dirección de propagación. Eso es lo que las distingue de las ondas longitudinales."
+  },
+  {
+    q: "La función de onda y(x, t) = y_m sin(kx − ωt) describe una onda sinusoidal viajando en la dirección:",
+    opts: [
+      "Negativa del eje x",
+      "Positiva del eje x",
+      "Positiva del eje y",
+      "Cualquiera, dependiendo del signo de y_m"
+    ],
+    ans: 1,
+    fb_c: "Correcto. Cuando el argumento del seno tiene la forma (kx − ωt), la onda viaja en la dirección +x. Si tuviera la forma (kx + ωt), viajaría en la dirección −x.",
+    fb_w: "Incorrecto. El signo negativo delante de ωt en el argumento (kx − ωt) indica propagación en la dirección positiva del eje x. Para dirección −x, el argumento sería (kx + ωt)."
+  },
+  {
+    q: "Para una onda sinusoidal con número de onda angular k = 8π rad/m, ¿cuál es la longitud de onda λ?",
+    opts: ["0.25 m", "0.5 m", "4 m", "8 m"],
+    ans: 0,
+    fb_c: "Correcto. Usando la relación k = 2π/λ, despejamos λ = 2π/k = 2π/(8π) = 0.25 m.",
+    fb_w: "Incorrecto. Recuerda que k = 2π/λ, entonces λ = 2π/k = 2π/(8π) = 0.25 m. No olvides incluir el factor 2π en el numerador."
+  },
+  {
+    q: "Una onda tiene frecuencia angular ω = 20π rad/s. ¿Cuáles son su período T y su frecuencia f?",
+    opts: [
+      "T = 0.1 s, f = 10 Hz",
+      "T = 0.5 s, f = 2 Hz",
+      "T = 1 s, f = 1 Hz",
+      "T = 0.2 s, f = 5 Hz"
+    ],
+    ans: 0,
+    fb_c: "Correcto. Usando ω = 2π/T, el período es T = 2π/ω = 2π/(20π) = 0.1 s, y la frecuencia f = 1/T = 10 Hz.",
+    fb_w: "Incorrecto. La relación es ω = 2π/T, por lo tanto T = 2π/ω = 2π/(20π) = 0.1 s y f = 1/T = 10 Hz."
+  },
+  {
+    q: "La velocidad de fase de una onda en una cuerda estirada con tensión τ y densidad lineal μ es:",
+    opts: ["v = √(μ/τ)", "v = τ/μ", "v = √(τ/μ)", "v = μ · τ"],
+    ans: 2,
+    fb_c: "Correcto. La velocidad de propagación en una cuerda ideal es v = √(τ/μ), donde τ es la tensión y μ la densidad lineal. Al aumentar la tensión, v aumenta; al aumentar μ, v disminuye.",
+    fb_w: "Incorrecto. La expresión derivada de la segunda ley de Newton para un elemento de cuerda es v = √(τ/μ). Verifica dimensiones: [N / (kg/m)]^(1/2) = [m²/s²]^(1/2) = m/s."
+  },
+  {
+    q: "Una cuerda tiene densidad lineal μ = 4 × 10⁻³ kg/m y está bajo una tensión de 100 N. ¿Cuál es la rapidez de una onda transversal en la cuerda?",
+    opts: ["25 m/s", "50 m/s", "100 m/s", "158 m/s"],
+    ans: 3,
+    fb_c: "Correcto. v = √(τ/μ) = √(100 / 0.004) = √(25 000) ≈ 158 m/s.",
+    fb_w: "Incorrecto. Aplica v = √(τ/μ): v = √(100 N / 4×10⁻³ kg/m) = √(25 000) ≈ 158 m/s."
+  },
+  {
+    q: "La potencia promedio transportada por una onda sinusoidal a lo largo de una cuerda es proporcional a:",
+    opts: [
+      "y_m (amplitud, primera potencia) y ω²",
+      "y_m² y ω²",
+      "y_m y ω (primera potencia)",
+      "y_m² y ω (primera potencia)"
+    ],
+    ans: 1,
+    fb_c: "Correcto. La potencia promedio es P_avg = ½ μvω²y_m². Depende del cuadrado de la amplitud y del cuadrado de la frecuencia angular. Este resultado es general para cualquier tipo de onda.",
+    fb_w: "Incorrecto. La expresión es P_avg = ½ μvω²y_m², por lo que la potencia es proporcional tanto a y_m² como a ω²."
+  },
+  {
+    q: "La velocidad de fase de una onda también puede expresarse como v = ω/k. Si ω = 300 rad/s y k = 1.5 rad/m, la velocidad de fase es:",
+    opts: ["200 m/s", "450 m/s", "0.005 m/s", "2.0 m/s"],
+    ans: 0,
+    fb_c: "Correcto. v = ω/k = 300 / 1.5 = 200 m/s. Esta relación también se expresa como v = λf = λ/T.",
+    fb_w: "Incorrecto. La velocidad de fase es v = ω/k = 300 rad/s ÷ 1.5 rad/m = 200 m/s."
+  },
+  {
+    q: "La velocidad transversal máxima u_m de un elemento de cuerda que oscila con una onda sinusoidal de amplitud y_m y frecuencia angular ω es:",
+    opts: ["u_m = k · y_m", "u_m = ω · y_m", "u_m = ω² · y_m", "u_m = v · y_m"],
+    ans: 1,
+    fb_c: "Correcto. La velocidad transversal es u = ∂y/∂t = −ωy_m cos(kx − ωt). El valor máximo en módulo es u_m = ωy_m. No confundir con la velocidad de fase v de la onda.",
+    fb_w: "Incorrecto. Derivando y(x,t) = y_m sin(kx − ωt) respecto a t se obtiene u = −ωy_m cos(kx − ωt), cuyo valor máximo es u_m = ωy_m."
+  },
+  {
+    q: "En la ecuación de onda diferencial ∂²y/∂x² = (1/v²) ∂²y/∂t², la constante v representa:",
+    opts: [
+      "La velocidad transversal máxima de las partículas de la cuerda",
+      "La aceleración angular de la onda",
+      "La velocidad de fase con la que el patrón de onda se propaga por el medio",
+      "La frecuencia de oscilación de cada elemento"
+    ],
+    ans: 2,
+    fb_c: "Correcto. En la ecuación de onda, v es la velocidad de fase: la rapidez con que el perfil de la onda se desplaza a lo largo del medio. Para una cuerda, v = √(τ/μ). Las partículas del medio NO se mueven a esa velocidad.",
+    fb_w: "Incorrecto. En la ecuación de onda, v es la velocidad de fase con que el patrón de la onda se propaga. No es la velocidad de las partículas del medio (esa es la velocidad transversal u)."
+  }
+];
+
+let current = 0, correct = 0, wrong = 0, answered = false;
+
+function render() {
+  const c = document.getElementById('q-container');
+  if (current >= questions.length) { showResult(); return; }
+  const q = questions[current];
+  const letters = ['A', 'B', 'C', 'D'];
+  c.innerHTML = `
+    <div class="q-card">
+      <div class="q-num">Pregunta ${current + 1} de ${questions.length}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">
+        ${q.opts.map((o, i) => `
+          <button class="opt" id="opt${i}" onclick="choose(${i})" aria-label="Opción ${letters[i]}: ${o}">
+            <span class="letter">${letters[i]}</span>
+            <span>${o}</span>
+          </button>`).join('')}
+      </div>
+      <div class="feedback" id="feedback" role="alert"></div>
+      <div class="btn-row">
+        <button class="btn-next" id="btn-next" onclick="next()">
+          ${current < questions.length - 1 ? 'Siguiente →' : 'Ver resultado →'}
+        </button>
+      </div>
+    </div>`;
+  updateProgress();
+  answered = false;
+}
+
+function choose(i) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const fb = document.getElementById('feedback');
+  const btn = document.getElementById('btn-next');
+
+  for (let j = 0; j < 4; j++) {
+    const el = document.getElementById('opt' + j);
+    el.classList.add('disabled');
+    if (j === q.ans) {
+      el.classList.add(i === q.ans ? 'selected-correct' : 'show-correct');
+    }
+  }
+
+  if (i === q.ans) {
+    document.getElementById('opt' + i).classList.add('selected-correct');
+    fb.className = 'feedback correct';
+    fb.innerHTML = '<strong>✓ Correcto.</strong> ' + q.fb_c;
+    correct++;
+    document.getElementById('pill-c').textContent = '✓ ' + correct + ' correcta' + (correct !== 1 ? 's' : '');
+  } else {
+    document.getElementById('opt' + i).classList.add('selected-wrong');
+    fb.className = 'feedback wrong';
+    fb.innerHTML = '<strong>✗ Incorrecto.</strong> ' + q.fb_w;
+    wrong++;
+    document.getElementById('pill-w').textContent = '✗ ' + wrong + ' incorrecta' + (wrong !== 1 ? 's' : '');
+  }
+
+  const rem = questions.length - current - 1;
+  document.getElementById('pill-r').textContent = rem + ' restante' + (rem !== 1 ? 's' : '');
+  btn.style.display = 'block';
+  updateProgress();
+}
+
+function next() {
+  current++;
+  render();
+}
+
+function updateProgress() {
+  const pct = Math.round((current / questions.length) * 100);
+  document.getElementById('pbar').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = 'Pregunta ' + (Math.min(current + 1, questions.length)) + ' de ' + questions.length;
+  document.getElementById('prog-pct').textContent = pct + '%';
+}
+
+function getStars(pct) {
+  if (pct >= 90) return '★★★★★';
+  if (pct >= 70) return '★★★★☆';
+  if (pct >= 50) return '★★★☆☆';
+  if (pct >= 30) return '★★☆☆☆';
+  return '★☆☆☆☆';
+}
+
+function getIcon(pct) {
+  if (pct >= 90) return '🏆';
+  if (pct >= 70) return '🎯';
+  if (pct >= 50) return '📘';
+  return '📖';
+}
+
+function getMessage(pct) {
+  if (pct >= 90) return '¡Excelente dominio de los fundamentos de ondas! Comprendes con solidez los tipos de ondas, la cinemática sinusoidal, la velocidad en cuerdas y la potencia transportada. Estás listo para abordar interferencia y ondas estacionarias.';
+  if (pct >= 70) return 'Buen desempeño. Hay conceptos que ya manejas bien; revisa los que fallaste, especialmente las relaciones entre k, ω, v y las expresiones de potencia promedio (sección 16.7).';
+  if (pct >= 50) return 'Desempeño intermedio. Te recomendamos repasar las secciones 16.4 (longitud de onda y frecuencia), 16.5 (velocidad de fase) y 16.7 (energía y potencia) antes de continuar.';
+  return 'Es momento de releer el capítulo con calma. Empieza por las definiciones básicas de amplitud, número de onda y frecuencia angular (sección 16.4) antes de pasar a las derivaciones.';
+}
+
+function showResult() {
+  document.getElementById('q-container').innerHTML = '';
+  document.getElementById('pbar').style.width = '100%';
+  document.getElementById('prog-label').textContent = 'Completado';
+  document.getElementById('prog-pct').textContent = '100%';
+
+  const pct = Math.round((correct / questions.length) * 100);
+  const card = document.getElementById('result-card');
+  card.style.display = 'block';
+
+  document.getElementById('result-icon').textContent = getIcon(pct);
+  document.getElementById('result-score').textContent = correct + '/10';
+  document.getElementById('result-pct').textContent = pct + '% de respuestas correctas';
+  document.getElementById('result-stars').textContent = getStars(pct);
+  document.getElementById('bd-c').textContent = '✓ ' + correct + ' correcta' + (correct !== 1 ? 's' : '');
+  document.getElementById('bd-w').textContent = '✗ ' + wrong + ' incorrecta' + (wrong !== 1 ? 's' : '');
+  document.getElementById('result-message').textContent = getMessage(pct);
+}
+
+function restart() {
+  current = 0; correct = 0; wrong = 0; answered = false;
+  document.getElementById('pill-c').textContent = '✓ 0 correctas';
+  document.getElementById('pill-w').textContent = '✗ 0 incorrectas';
+  document.getElementById('pill-r').textContent = '10 restantes';
+  document.getElementById('result-card').style.display = 'none';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
